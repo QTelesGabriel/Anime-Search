@@ -27,6 +27,9 @@ Este é um sistema completo de recomendação de animes, com frontend em React, 
 ### Recomendação
 - Collaborative Filtering (User-Based ou Item-Based) via `surprise` ou `scikit-learn` (Python)
 
+### Base de Dados
+- Os dados foram pegos do Kaggle: https://www.kaggle.com/datasets/CooperUnion/anime-recommendations-database
+
 ---
 
 ## Como Rodar o Projeto
