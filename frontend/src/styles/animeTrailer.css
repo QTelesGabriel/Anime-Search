@@ -1,0 +1,17 @@
+.anime-trailer {
+  width: 850px;
+  background-color: #1D1D1D;
+  padding: 25px 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 10px;
+}
+
+.anime-trailer__iframe {
+  width: 100%;
+  
+  aspect-ratio: 16 / 9;
+
+  border-radius: 8px;
+}

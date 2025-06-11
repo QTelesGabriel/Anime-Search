@@ -1,0 +1,28 @@
+.categorie {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.title {
+    margin: 14px 34px;
+    font-size: 36px;
+}
+
+.options {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.option {
+    padding: 0 34px 0 16px;
+    font-size: 20px;
+}
+
+.option:hover {
+    font-size: 22px;
+    text-decoration: underline;
+}

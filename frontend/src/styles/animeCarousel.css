@@ -1,0 +1,35 @@
+.anime-carousel {
+  display: flex;
+  overflow-x: scroll;
+  gap: 16px;
+  padding-left: 34px;
+  padding-right: 34px;
+  padding-bottom: 16px;
+  scroll-behavior: smooth;
+  scroll-snap-type: x mandatory;
+  margin: 0 auto;
+  margin-bottom: 50px;
+}
+
+.loading {
+    margin: 0 0 0 34px;
+}
+
+.anime-carousel::-webkit-scrollbar {
+    height: 10px;                       /* Altura da barra */
+}
+
+.anime-carousel::-webkit-scrollbar-track {
+    background: #1c1c1c;               /* Cor do fundo */
+}
+
+.anime-carousel::-webkit-scrollbar-thumb {
+    background-color: #555;            /* Cor da barra */
+    border-radius: 5px;                /* Arredondamento */
+}
+
+.anime-carousel-container {
+    -ms-overflow-style: none;  /* IE e Edge */
+    scrollbar-width: none;     /* Firefox */
+}
+

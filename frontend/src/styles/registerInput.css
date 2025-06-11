@@ -1,0 +1,27 @@
+.register {
+  width: 420px;
+  margin-bottom: 1rem;
+}
+
+.register__title {
+  margin-bottom: 10px;
+  font-size: 20;
+  font-weight: bold;
+  color: #FFFFFF;
+}
+
+.register-bar__input {
+  height: 42px;
+  width: 100%;
+  padding: 0.5rem;
+  border-radius: 10px;
+  border: none;
+  background-color: #FFFFFF;
+  font-size: 20px;
+  color: white;
+  margin-bottom: 20px;
+}
+
+.register-bar__input::placeholder {
+  color: #575757;
+}

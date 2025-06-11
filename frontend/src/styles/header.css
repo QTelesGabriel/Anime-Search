@@ -1,0 +1,72 @@
+.header {
+    background-color: #1A1A1A;
+    color: #FFFFFF;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-direction: row;
+    height: 100px;
+    width: 100vw;
+    padding: 0 34px;
+}
+
+.header__title {
+    font-size: 36px;
+}
+
+.signup {
+    font-size: 20px;
+    text-decoration: none;
+    font-weight: bold;
+    margin: 0 24px;
+}
+
+.signup:hover {
+    font-size: 22px;
+    text-decoration: underline;
+}
+
+.login {
+    font-size: 20px;
+    text-decoration: none;
+    font-weight: bold;
+    margin: 0px;
+    padding: 8px 30px;
+    background-color: #FF8484;
+    border-radius: 10px;
+}
+
+.login:hover {
+    font-size: 22px;
+    background-color: #FF6B6B;
+}
+
+.home {
+    font-size: 20px;
+    text-decoration: none;
+    font-weight: bold;
+    margin: 0px;
+    padding: 8px 30px;
+    background-color: #FF8484;
+    border-radius: 10px;
+}
+
+.home:hover {
+    font-size: 22px;
+    background-color: #FF6B6B;
+}
+
+.profile {
+    font-size: 20px;
+    text-decoration: none;
+    font-weight: bold;
+    margin: 0px;
+    padding: 8px 30px;
+    background-color: #FF8484;
+    border-radius: 10px;
+}
+
+.profile:hover {
+    font-size: 22px;
+    background-color: #FF6B6B;
+}

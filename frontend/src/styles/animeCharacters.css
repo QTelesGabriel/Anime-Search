@@ -1,0 +1,39 @@
+.anime-characters {
+    width: 850px;
+    background-color: #1D1D1D;
+    padding: 45px;
+    border-radius: 10px;
+    margin-bottom: 2rem;
+    justify-content: center;
+    align-items: center;
+}
+
+.characters-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 1rem;
+}
+
+.character-card {
+    background-color: #323232;
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+    text-align: center;
+}
+
+.character-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.character-image {
+    width: 100%;
+    border-radius: 0.25rem;
+    height: 70%;
+}
+
+.character-name {
+    justify-content: center;
+    text-align: center;
+    font-size: 16px;
+}

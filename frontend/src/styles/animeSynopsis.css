@@ -1,0 +1,19 @@
+.anime-synopsis {
+    width: 850px;
+}
+
+.synopsis {
+    font-size: 20px;
+    width: 100%;
+}
+
+.read-more {
+    font-size: 24px;
+    color: #ff6767;
+}
+
+.read-more:hover {
+    text-decoration: underline;
+    cursor: pointer;
+}
+
