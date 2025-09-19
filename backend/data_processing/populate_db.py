@@ -314,36 +314,44 @@ def process_anime(cursor, anime_id):
 # Main
 # -----------------
 def main():
+    print("[MAIN] Iniciando...")
     conn = get_db_connection()
     if not conn:
+        print("[MAIN] Falha na conexão com o DB")
         return
-    
+
     os.makedirs("cache", exist_ok=True)
+    print("[MAIN] Pasta cache verificada/criada")
 
     try:
         cursor = conn.cursor()
-        page = load_last_page()  # carrega a última página processada
+        page = load_last_page()
+        print(f"[MAIN] Última página carregada: {page}")
 
         while True:
+            print(f"[MAIN] Buscando página {page}...")
             anime_list = fetch_json(f"{JIKAN_BASE_URL}/anime?page={page}")
             if not anime_list:
+                print("[MAIN] Nenhum anime retornado, encerrando loop")
                 break
 
             for anime in anime_list:
                 process_anime(cursor, anime.get('mal_id'))
                 conn.commit()
+                
+                os.system('clear')
 
-                # Atualiza caches em tempo real
                 save_json_set(ANIME_CACHE_FILE, anime_cache)
                 save_json_set(CHARACTER_CACHE_FILE, character_cache)
                 save_json_set(VOICE_ACTOR_CACHE_FILE, voice_actor_cache)
+                save_last_page(page)  # Salva a página atual a cada anime processado
 
-            # Atualiza página depois de processar completamente
             page += 1
-            save_last_page(page)
 
     finally:
         if conn:
-            conn.close()
-        if cursor:
             cursor.close()
+            conn.close()
+
+if __name__ == "__main__":
+    main()
