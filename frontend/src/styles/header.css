@@ -19,6 +19,8 @@
     text-decoration: none;
     font-weight: bold;
     margin: 0 24px;
+    color: #FFFFFF; /* Adicionado para garantir a cor do texto */
+    transition: font-size 0.3s ease, text-decoration 0.3s ease;
 }
 
 .signup:hover {
@@ -34,11 +36,30 @@
     padding: 8px 30px;
     background-color: #FF8484;
     border-radius: 10px;
+    color: #FFFFFF; /* Adicionado para garantir a cor do texto */
+    transition: font-size 0.3s ease, text-decoration 0.3s ease;
 }
 
 .login:hover {
     font-size: 22px;
     background-color: #FF6B6B;
+}
+
+.logout-button {
+    font-size: 20px;
+    text-decoration: none;
+    font-weight: bold;
+    margin: 0 24px;
+    background: none; /* Remove o fundo */
+    border: none; /* Remove a borda */
+    color: #FFFFFF; /* Garante que o texto seja branco */
+    cursor: pointer; /* Adiciona o cursor de clique */
+    transition: font-size 0.3s ease, text-decoration 0.3s ease; /* Adiciona transição suave */
+}
+
+.logout-button:hover {
+    font-size: 22px;
+    text-decoration: underline;
 }
 
 .home {
@@ -49,6 +70,8 @@
     padding: 8px 30px;
     background-color: #FF8484;
     border-radius: 10px;
+    color: #FFFFFF; /* Adicionado para garantir a cor do texto */
+    transition: font-size 0.3s ease, text-decoration 0.3s ease;
 }
 
 .home:hover {
@@ -64,6 +87,8 @@
     padding: 8px 30px;
     background-color: #FF8484;
     border-radius: 10px;
+    color: #FFFFFF; /* Adicionado para garantir a cor do texto */
+    transition: font-size 0.3s ease, text-decoration 0.3s ease;
 }
 
 .profile:hover {

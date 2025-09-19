@@ -4,9 +4,8 @@ import Header from '../components/Header';
 import '../styles/character.css';
 
 const Character = () => {
-
     const { id } = useParams();
-    const baseURL = "https://api.jikan.moe/v4"
+    const API_BASE_URL = "http://localhost:8000"; // Seu backend
 
     const [character, setCharacter] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -20,20 +19,28 @@ const Character = () => {
     useEffect(() => {
         const getCharacterFullByID = async () => {
             try {
-                const responseCharacter = await fetch(`${baseURL}/characters/${id}/full`);
-                const responseJsonCharacter = await responseCharacter.json();
-                setCharacter(responseJsonCharacter.data);
+                const response = await fetch(`${API_BASE_URL}/character/${id}`);
+                const responseData = await response.json();
+
+                if (response.ok) {
+                    setCharacter(responseData);
+                } else {
+                    console.error("Erro ao buscar character:", responseData.detail);
+                }
                 
                 setLoading(false);
             } catch (error) {
-                console.error("Erro ao buscar character: ", error);
+                console.error("Erro de rede ao buscar character: ", error);
+                setLoading(false);
             }
         };
 
         getCharacterFullByID();
-    }, [id])
+    }, [id]);
 
-    if (loading) return <p>Loading...</p>
+    if (loading) return <p>Loading...</p>;
+
+    if (!character) return <p>Character not found.</p>;
 
     return (
         <>
@@ -42,39 +49,57 @@ const Character = () => {
                 <h1 className="character-title">{character.name}</h1>
                 
                 <div className="character-details">
-                    <img src={character.images.jpg.image_url} alt={character.name} className="character-img" />
+                    <img src={character.image_url} alt={character.name} className="character-img" />
 
                     <div className="character-info">
                         <h2>Character Details</h2>
-                        <p><strong>Kanji Name:</strong> {character.name_kanji}</p>
-                        <p><strong>Nicknames:</strong> {character.nicknames?.join(', ') || 'None'}</p>
-                        <p><strong>Favorites:</strong> {character.favorites}</p>
+                        <p><strong>Favorites:</strong> {character.favorites || 'N/A'}</p>
                         <p><strong>About:</strong></p>
-                        {character.about?.split('\n').map((line, index) => (
-                            <p key={index}>{decodeHTML(line)}</p>
-                        ))}
+                        {/* * Use dangerouslySetInnerHTML para renderizar o HTML da biografia
+                          * Isso é seguro porque o dado vem da API Jikan e não de um usuário
+                        */}
+                        <div dangerouslySetInnerHTML={{ __html: character.about?.replace(/\\n/g, '<br/>') || 'N/A' }}></div>
                     </div>
                 </div>
 
-                <h2 className="voice-title">Voice Actors</h2>
+                {/* * --- 
+                  * Nova seção para as fotos do personagem
+                  * --- 
+                */}
+                {character.pictures && character.pictures.length > 0 && (
+                    <>
+                        <h2 className="section-title">Pictures</h2>
+                        <div className="character-pictures-grid">
+                            {character.pictures.map((pic, index) => (
+                                <img key={index} src={pic.image_url} alt={`${character.name} picture ${index}`} className="character-pic" />
+                            ))}
+                        </div>
+                    </>
+                )}
+                
+                <h2 className="section-title">Voice Actors</h2>
                 <div className="voice-actors-grid">
-                    {character.voices?.map((actor, index) => (
+                    {character.voice_actors?.map((actor, index) => (
                         <div key={index} className="voice-card">
-                            <a href={actor.person.url}>
+                            <a href={`/voice-actor/${actor.mal_id}`}>
                                 <img 
-                                    src={actor.person.images.jpg.image_url} 
-                                    alt={actor.person.name} 
+                                    src={actor.image_url} 
+                                    alt={actor.name} 
                                     className="voice-img" 
                                 />
                                 <div className="voice-card-footer">
-                                    <p className="voice-name">{actor.person.name}</p>
+                                    <p className="voice-name">{actor.name}</p>
                                     <p className="voice-language">{actor.language}</p>
                                 </div>
                             </a>
+                            <div className="voice-actor-details">
+                                <p><strong>Birthday:</strong> {actor.birthday || 'N/A'}</p>
+                                <p><strong>About:</strong></p>
+                                <div dangerouslySetInnerHTML={{ __html: actor.about?.replace(/\\n/g, '<br/>') || 'N/A' }}></div>
+                            </div>
                         </div>
                     ))}
                 </div>
-
             </div>
         </>
     );

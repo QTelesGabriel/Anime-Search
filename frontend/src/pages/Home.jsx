@@ -5,6 +5,8 @@ import AnimeCarousel from '../components/AnimeCarousel';
 import '../styles/categorie.css';
 
 const Home = () => {
+    const API_BASE_URL = "http://localhost:8000";
+
     const [bestAnimes, setBestAnimes] = useState([]);
     const [popularAnimes, setPopularAnimes] = useState([]);
     const [searchResults, setSearchResults] = useState([]);
@@ -13,18 +15,17 @@ const Home = () => {
     useEffect(() => {
         const fetchAnimes = async () => {
             try {
-                const resTop = await fetch('https://api.jikan.moe/v4/top/anime?limit=20');
+                // Requisição para o seu backend para as melhores avaliações
+                const resTop = await fetch(`${API_BASE_URL}/animes/top`);
                 const jsonTop = await resTop.json();
-                setBestAnimes(jsonTop.data);
+                setBestAnimes(jsonTop); // Assumindo que a resposta já é a lista de animes
 
-                await new Promise(resolve => setTimeout(resolve, 500));
-
-                const resPopular = await fetch('https://api.jikan.moe/v4/top/anime?filter=bypopularity&limit=20');
+                // Requisição para o seu backend para os mais populares
+                const resPopular = await fetch(`${API_BASE_URL}/animes/popular`);
                 const jsonPopular = await resPopular.json();
-                setPopularAnimes(jsonPopular.data);
-
+                setPopularAnimes(jsonPopular); // Assumindo que a resposta já é a lista de animes
             } catch (error) {
-                console.error('Erro ao buscar animes: ', error);
+                console.error('Erro ao buscar animes:', error);
             }
         };
 
@@ -38,11 +39,12 @@ const Home = () => {
         }
 
         try {
-            const res = await fetch(`https://api.jikan.moe/v4/anime?q=${encodeURIComponent(search)}&limit=25`);
+            // Requisição para o seu backend para a busca
+            const res = await fetch(`${API_BASE_URL}/animes/search?q=${encodeURIComponent(search)}`);
             const json = await res.json();
-            setSearchResults(json.data);
+            setSearchResults(json);
         } catch (error) {
-            console.error('Erro ao buscar anime:', error);
+            console.error('Erro ao buscar animes:', error);
         }
     };
 

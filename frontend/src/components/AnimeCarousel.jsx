@@ -3,20 +3,27 @@ import AnimeCard from './AnimeCard';
 import '../styles/animeCarousel.css'
 
 const AnimeCarousel = ({ animes }) => {
-    if (!animes || animes.length === 0) return <p className='loading'>Loading...</p>;
+    // Adicionado um retorno se não houver animes para evitar erros de renderização
+    if (!animes || animes.length === 0) {
+        return <p className='loading'>Carregando...</p>;
+    }
 
     return (
         <>
             <div className="anime-carousel-container">
-            	<div className="anime-carousel">
-					{animes.map((anime, index) => (
-					<AnimeCard key={index} title={anime?.title} image={anime?.images.jpg.large_image_url} id={anime?.mal_id} />
-					))}
-            	</div>
-			</div>
-		</>
-	)
+                <div className="anime-carousel">
+                    {animes.map((anime) => (
+                        <AnimeCard
+                            key={anime.mal_id} // Chave única é o mal_id
+                            title={anime.title}
+                            image={anime.image_url}
+                            id={anime.mal_id}
+                        />
+                    ))}
+                </div>
+            </div>
+        </>
+    )
 }
-
 
 export default AnimeCarousel;

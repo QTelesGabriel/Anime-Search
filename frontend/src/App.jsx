@@ -7,6 +7,7 @@ import Signup from './pages/Signup'
 import Login from './pages/Login';
 import Anime from './pages/Anime';
 import Character from './pages/Character';
+import VoiceActor from './pages/VoiceActor';
 
 function App() {
 
@@ -20,6 +21,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/anime/:id" element={<Anime />} />
           <Route path="/character/:id" element={<Character />} />
+          <Route path="/voice-actor/:id" element={<VoiceActor />} /> {/* 👈 Adicione a nova rota */}
         </Routes>
       </Router>
     </AuthProvider>

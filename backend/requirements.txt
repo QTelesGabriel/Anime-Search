@@ -1,0 +1,7 @@
+fastapi
+uvicorn
+psycopg2-binary
+bcrypt
+pydantic
+scikit-surprise
+numpy<2.0.0

@@ -1,0 +1,102 @@
+.voice-actor-container {
+    width: 850px;
+    margin: 30px auto;
+    background-color: #1D1D1D;
+    padding: 30px;
+    border-radius: 10px;
+}
+
+.voice-actor-title {
+    font-size: 36px;
+    margin-bottom: 20px;
+    color: white;
+    text-align: center;
+}
+
+.voice-actor-details {
+    display: flex;
+    gap: 2rem;
+    margin-bottom: 2rem;
+    align-items: flex-start;
+}
+
+.voice-actor-img {
+    width: 264px;
+    height: 384px;
+    object-fit: cover;
+    border-radius: 0.5rem;
+}
+
+.voice-actor-info h2 {
+    font-size: 28px;
+    margin-bottom: 10px;
+    color: white;
+}
+
+.voice-actor-info p {
+    color: #ffffff;
+    margin: 8px 0;
+}
+
+.voice-actor-info strong {
+    font-size: 20px;
+    font-weight: bold;
+}
+
+.section-title {
+    margin-top: 30px;
+    margin-bottom: 15px;
+    font-size: 28px;
+    color: white;
+}
+
+.characters-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 1rem;
+}
+
+.character-card {
+    width: 150px;
+    height: 250px;
+    background-color: #1D1D1D;
+    padding: 0;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 0 5px rgba(0,0,0,0.3);
+}
+
+.character-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+.character-img-grid {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    border-radius: 0.5rem 0.5rem 0 0;
+}
+
+.character-card-footer {
+    height: 70px;
+    background-color: #2e2e2e;
+    padding: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+.character-name-grid {
+    color: white;
+    font-size: 14px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    width: 100%;
+}

@@ -1,14 +1,30 @@
+version: '3.8'
+
 services:
-  postgres:
-    image: postgres:16
-    container_name: postgres_db
-    restart: always
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./app:/app/app
+    depends_on:
+      - db
     environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: recommendation
+      - DB_HOST=db
+      - DB_NAME=animesearch
+      - DB_USER=user
+      - DB_PASS=password
+      - DB_PORT=5432
+    restart: on-failure
+
+  db:
+    image: postgres:16
     ports:
       - "5432:5432"
+    environment:
+      - POSTGRES_DB=animesearch
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
     volumes:
       - postgres_data:/var/lib/postgresql/data
 

@@ -1,82 +1,87 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Header from '../components/Header';
 import SearchBar from '../components/SearchBar';
 import AnimeCarousel from '../components/AnimeCarousel';
 import '../styles/categorie.css';
+import { useAuth } from '../context/AuthProvider';
 
 const Profile = () => {
-    const animes = [
-        { 
-            title: 'Haikyuu!', 
-            image: 'https://d28hgpri8am2if.cloudfront.net/book_images/onix/cvr9781421587660/haikyu-vol-1-9781421587660_hr.jpg' 
-        },
-        { 
-            title: 'Naruto', 
-            image: 'https://cdn.myanimelist.net/images/anime/13/17405.jpg' 
-        },
-        { 
-            title: 'Attack on Titan', 
-            image: 'https://cdn.myanimelist.net/images/anime/10/47347.jpg' 
-        },
-        { 
-            title: 'One Piece', 
-            image: 'https://cdn.myanimelist.net/images/anime/6/73245.jpg' 
-        },
-        { 
-            title: 'Demon Slayer', 
-            image: 'https://cdn.myanimelist.net/images/anime/1286/99889.jpg' 
-        },
-        { 
-            title: 'My Hero Academia', 
-            image: 'https://cdn.myanimelist.net/images/anime/10/78745.jpg' 
-        },
-        { 
-            title: 'Jujutsu Kaisen', 
-            image: 'https://cdn.myanimelist.net/images/anime/1171/109222.jpg' 
-        },
-        { 
-            title: 'Tokyo Revengers', 
-            image: 'https://th.bing.com/th/id/OIP.wasvqJezWrh7IyAUpvgE0wHaLH?rs=1&pid=ImgDetMain' 
-        },
-        { 
-            title: 'Haikyuu!', 
-            image: 'https://d28hgpri8am2if.cloudfront.net/book_images/onix/cvr9781421587660/haikyu-vol-1-9781421587660_hr.jpg' 
-        },
-        { 
-            title: 'Naruto', 
-            image: 'https://cdn.myanimelist.net/images/anime/13/17405.jpg' 
-        },
-        { 
-            title: 'Attack on Titan', 
-            image: 'https://cdn.myanimelist.net/images/anime/10/47347.jpg' 
-        },
-        { 
-            title: 'One Piece', 
-            image: 'https://cdn.myanimelist.net/images/anime/6/73245.jpg' 
-        },
-        { 
-            title: 'Demon Slayer', 
-            image: 'https://cdn.myanimelist.net/images/anime/1286/99889.jpg' 
-        },
-        { 
-            title: 'My Hero Academia', 
-            image: 'https://cdn.myanimelist.net/images/anime/10/78745.jpg' 
-        },
-        { 
-            title: 'Jujutsu Kaisen', 
-            image: 'https://cdn.myanimelist.net/images/anime/1171/109222.jpg' 
-        },
-        { 
-            title: 'Tokyo Revengers', 
-            image: 'https://th.bing.com/th/id/OIP.wasvqJezWrh7IyAUpvgE0wHaLH?rs=1&pid=ImgDetMain' 
-        }
-    ]
+    const { userId } = useAuth();
+    const API_BASE_URL = "http://localhost:8000";
+
+    const [myAnimes, setMyAnimes] = useState([]);
+    const [recommendedAnimes, setRecommendedAnimes] = useState([]);
+    const [loadingMyList, setLoadingMyList] = useState(true);
+    const [loadingRecommendations, setLoadingRecommendations] = useState(true);
+
+    // useEffect para buscar a lista do usuário
+    useEffect(() => {
+        const fetchMyAnimes = async () => {
+            if (userId) {
+                setLoadingMyList(true);
+                try {
+                    const response = await fetch(`${API_BASE_URL}/my-animes/${userId}`);
+                    if (response.ok) {
+                        const data = await response.json();
+                        setMyAnimes(data);
+                    } else {
+                        console.error(`Erro ao buscar sua lista: ${response.status} ${response.statusText}`);
+                        setMyAnimes([]);
+                    }
+                } catch (error) {
+                    console.error("Erro de rede ao buscar sua lista:", error);
+                    setMyAnimes([]);
+                } finally {
+                    setLoadingMyList(false);
+                }
+            } else {
+                setMyAnimes([]);
+                setLoadingMyList(false);
+            }
+        };
+
+        fetchMyAnimes();
+    }, [userId]);
+
+    // useEffect para buscar as recomendações
+    useEffect(() => {
+        const fetchRecommendations = async () => {
+            if (userId) {
+                setLoadingRecommendations(true);
+                try {
+                    const response = await fetch(`${API_BASE_URL}/recommendations/${userId}`);
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (Array.isArray(data)) {
+                            setRecommendedAnimes(data);
+                        } else {
+                            console.error("A API de recomendação retornou um formato de dado inesperado:", data);
+                            setRecommendedAnimes([]);
+                        }
+                    } else {
+                        console.error(`Erro ao buscar recomendações: ${response.status} ${response.statusText}`);
+                        setRecommendedAnimes([]);
+                    }
+                } catch (error) {
+                    console.error("Erro de rede ao buscar recomendações:", error);
+                    setRecommendedAnimes([]);
+                } finally {
+                    setLoadingRecommendations(false);
+                }
+            } else {
+                setRecommendedAnimes([]);
+                setLoadingRecommendations(false);
+            }
+        };
+
+        fetchRecommendations();
+    }, [userId]);
 
     return (
         <>
-            <Header /> 
-            <SearchBar /> 
+            <Header />
+            <SearchBar />
             <div className="categorie">
                 <h2 className="title">Your List</h2>
                 <div className="options">
@@ -84,14 +89,23 @@ const Profile = () => {
                     <Link to='/' className="option">Filter Anime List</Link>
                 </div>
             </div>
-            <AnimeCarousel animes={animes} />
+            {loadingMyList ? (
+                <p className='loading'>Carregando sua lista...</p>
+            ) : (
+                <AnimeCarousel animes={myAnimes} />
+            )}
+            
             <div className="categorie">
                 <h2 className="title">Recommended For You</h2>
                 <Link to='/' className="option">Filter Recommendations</Link>
             </div>
-            <AnimeCarousel animes={animes} />
+            {loadingRecommendations ? (
+                <p className='loading'>Carregando recomendações...</p>
+            ) : (
+                <AnimeCarousel animes={recommendedAnimes} />
+            )}
         </>
-    )
-}
+    );
+};
 
 export default Profile;

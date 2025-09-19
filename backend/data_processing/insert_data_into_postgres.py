@@ -1,60 +1,67 @@
+import os
 import pandas as pd
 import psycopg2
 from psycopg2 import sql
+from psycopg2.extras import execute_values
 
 # Connection configurations
 user = 'user'
 password = 'password'
 host = 'localhost'
 port = '5432'
-database = 'recommendation'
+database = 'animesearch'
 
 # CSV path
-# It needs to be in the data_processing directory to run correctly"
-csv_file = "../data/final_rating.csv"
+script_dir = os.path.dirname(os.path.abspath(__file__))
+csv_file_path = os.path.join(script_dir, '../data/rating.csv')
 
 # Table name
 table_name = 'ratings'
 
 # Load CSV
-df = pd.read_csv(csv_file)
+try:
+    df = pd.read_csv(csv_file_path)
+    print("Arquivo CSV carregado com sucesso!")
+except FileNotFoundError:
+    print(f"Erro: O arquivo CSV '{csv_file_path}' não foi encontrado.")
+    exit()
 
-# Connection
-conn = psycopg2.connect(
-    dbname=database, user=user, password=password, host=host, port=port
-)
-cur = conn.cursor()
+conn = None
+cur = None
 
-# Create table
-create_table_query = f"""
-CREATE TABLE IF NOT EXISTS {table_name} (
-    user_id INT,
-    anime_id INT,
-    rating INT
-);
-"""
+try:
+    # Connection
+    conn = psycopg2.connect(
+        dbname=database, user=user, password=password, host=host, port=port
+    )
+    cur = conn.cursor()
 
-cur.execute(create_table_query)
-conn.commit()
+    # Convert DataFrame to a list of tuples for batch insertion
+    data_to_insert = [
+        (int(row['user_id']), int(row['anime_id']), int(row['rating']))
+        for _, row in df.iterrows()
+    ]
+    
+    # Use ON CONFLICT para ignorar entradas duplicadas
+    insert_query = sql.SQL("""
+        INSERT INTO {table_name} (user_id, anime_id, rating) VALUES %s
+        ON CONFLICT (user_id, anime_id) DO NOTHING;
+    """).format(table_name=sql.Identifier(table_name))
 
-# Insert query with placeholders
-insert_query = sql.SQL(
-    f"INSERT INTO {table_name} (user_id, anime_id, rating) VALUES (%s, %s, %s)"
-)
+    # Use execute_values for efficient batch insertion
+    execute_values(cur, insert_query, data_to_insert)
+    conn.commit()
 
-# Iterate and insert
-for index, row in df.iterrows():
-    cur.execute(insert_query, (
-        int(row['user_id']), 
-        int(row['anime_id']), 
-        int(row['rating'])
-    ))
-    print(f"user_id: {row['user_id']}  anime_id: {row['anime_id']}  rating: {row['rating']}")
+    print(f"{len(data_to_insert)} linhas processadas. Duplicatas foram ignoradas.")
 
-conn.commit()
+except (Exception, psycopg2.DatabaseError) as error:
+    print(f"Erro ao inserir dados: {error}")
+    if conn:
+        conn.rollback()
 
-# Finalize
-cur.close()
-conn.close()
-
-print("Tabela criada e dados inseridos com sucesso!")
+finally:
+    # Finalize connections
+    if cur:
+        cur.close()
+    if conn:
+        conn.close()

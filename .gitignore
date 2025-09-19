@@ -1,3 +1,4 @@
 .venv
 backend/data/*.csv
 backend/model_machine_learning/*.pkl
+__pycache__
