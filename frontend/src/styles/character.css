@@ -41,6 +41,39 @@
     font-size: 20px;
 }
 
+/* ---------------------------------------------------- */
+/* A regra agora é mais genérica, e funciona em qualquer lugar */
+.about-content {
+    max-height: 300px;
+    overflow-y: auto;
+    padding-right: 10px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    color: #ccc;
+    text-align: justify;
+}
+/* ---------------------------------------------------- */
+
+.character-pictures-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.character-pic {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease-in-out;
+}
+
+.character-pic:hover {
+    transform: scale(1.03);
+}
+
 .voice-title {
     margin-top: 30px;
     margin-bottom: 15px;
@@ -79,7 +112,6 @@
     border-radius: 0.5rem 0.5rem 0 0;
 }
 
-
 .voice-card-footer {
     height: 70px;
     background-color: #2e2e2e;
@@ -98,4 +130,24 @@
     text-overflow: ellipsis;
     white-space: nowrap;
     width: 100%;
+}
+
+.about-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.about-content::-webkit-scrollbar-track {
+    background: #1D1D1D;
+    border-radius: 10px;
+}
+
+.about-content::-webkit-scrollbar-thumb {
+    background-color: #555;
+    border-radius: 10px;
+    border: 2px solid #1D1D1D;
+}
+
+.about-content {
+    scrollbar-width: thin;
+    scrollbar-color: #555 #1D1D1D;
 }

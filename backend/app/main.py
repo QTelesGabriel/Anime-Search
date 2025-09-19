@@ -7,7 +7,6 @@ from surprise import dump
 from pydantic import BaseModel
 from typing import List, Dict
 
-# Assumindo que você tem esses arquivos no mesmo diretório ou em um pacote importável
 from .auth import hash_password, verify_password
 from .models import UserCreate, UserLogin
 from psycopg2.extras import DictCursor, DictRow
@@ -15,12 +14,29 @@ from psycopg2.extras import DictCursor, DictRow
 app = FastAPI()
 
 # -----------------
+# CLASSES DE DADOS E FUNÇÕES DE AUTENTICAÇÃO
+# Essas são versões simples para que o código seja executável.
+# Use as suas implementações reais se elas já existirem em outros arquivos.
+# -----------------
+class UserCreate(BaseModel):
+    username: str
+    password: str
+
+class UserLogin(BaseModel):
+    username: str
+    password: str
+
+# -----------------
+# FIM DAS VERSÕES SIMPLES
+# -----------------
+
+# -----------------
 # Configurações do Banco de Dados
 # -----------------
 DB_NAME = os.getenv("DB_NAME", "animesearch")
 DB_USER = os.getenv("DB_USER", "user")
 DB_PASSWORD = os.getenv("DB_PASS", "password")
-DB_HOST = os.getenv("DB_HOST", "db") # Alterado para "db" para o ambiente Docker
+DB_HOST = os.getenv("DB_HOST", "db")
 
 def get_db_connection():
     """Conecta ao banco de dados PostgreSQL."""
@@ -294,93 +310,6 @@ def get_recommendations_svd(user_id: int):
             cur.close()
             conn.close()
 
-# -----------------
-# Endpoints de Detalhes (Atualizados)
-# -----------------
-
-@app.get("/anime/{mal_id}")
-def get_anime_details(mal_id: int):
-    conn = get_db_connection()
-    if not conn:
-        raise HTTPException(status_code=500, detail="Database connection failed")
-
-    try:
-        cur = conn.cursor(cursor_factory=DictCursor)
-        
-        # 1. Busca os dados principais do anime
-        cur.execute("SELECT * FROM animes WHERE mal_id = %s;", (mal_id,))
-        anime = cur.fetchone()
-        
-        if not anime:
-            raise HTTPException(status_code=404, detail="Anime não encontrado.")
-
-        anime_details = dict(anime)
-
-        # 2. Busca e adiciona os gêneros
-        cur.execute("""
-            SELECT g.name FROM animes_genres ag 
-            JOIN genres g ON ag.genre_mal_id = g.mal_id 
-            WHERE ag.anime_mal_id = %s;
-        """, (mal_id,))
-        anime_details['genres'] = [row['name'] for row in cur.fetchall()]
-
-        # 3. Busca e adiciona os estúdios
-        cur.execute("""
-            SELECT s.name FROM animes_studios ast 
-            JOIN studios s ON ast.studio_mal_id = s.mal_id 
-            WHERE ast.anime_mal_id = %s;
-        """, (mal_id,))
-        anime_details['studios'] = [row['name'] for row in cur.fetchall()]
-
-        # 4. Busca e adiciona os serviços de streaming com URL
-        cur.execute("""
-            SELECT ss.name, ss.url FROM animes_streaming a_s 
-            JOIN streaming_services ss ON a_s.service_id = ss.id 
-            WHERE a_s.anime_mal_id = %s;
-        """, (mal_id,))
-        anime_details['streaming'] = [dict(row) for row in cur.fetchall()]
-
-        # 5. Busca personagens e dubladores (básico)
-        cur.execute("""
-            SELECT c.mal_id, c.name, c.image_url, 
-                   va.mal_id as va_mal_id, va.name as va_name, va.image_url as va_image_url
-            FROM animes_characters ac
-            JOIN characters c ON ac.character_mal_id = c.mal_id
-            LEFT JOIN characters_voice_actors cva ON c.mal_id = cva.character_mal_id
-            LEFT JOIN voice_actors va ON cva.voice_actor_mal_id = va.mal_id
-            WHERE ac.anime_mal_id = %s;
-        """, (mal_id,))
-        
-        characters_raw = cur.fetchall()
-        characters_dict = {}
-        for row in characters_raw:
-            char_id = row['mal_id']
-            if char_id not in characters_dict:
-                characters_dict[char_id] = {
-                    'mal_id': char_id,
-                    'name': row['name'],
-                    'image_url': row['image_url'],
-                    'voice_actors': []
-                }
-            if row['va_mal_id']:
-                characters_dict[char_id]['voice_actors'].append({
-                    'mal_id': row['va_mal_id'],
-                    'name': row['va_name'],
-                    'image_url': row['va_image_url']
-                })
-        
-        anime_details['characters'] = list(characters_dict.values())
-        
-        return anime_details
-
-    except (Exception, psycopg2.DatabaseError) as error:
-        print(f"Erro na consulta SQL para o anime ID {mal_id}: {error}")
-        raise HTTPException(status_code=500, detail="Ocorreu um erro ao buscar os detalhes do anime.")
-    finally:
-        if conn:
-            cur.close()
-            conn.close()
-
 class Rating(BaseModel):
     user_id: int
     anime_id: int
@@ -415,6 +344,101 @@ def rate_anime(rating: Rating):
         if conn:
             conn.close()
 
+# -----------------
+# Endpoints de Detalhes (Atualizados)
+# -----------------
+
+@app.get("/anime/{mal_id}")
+def get_anime_details(mal_id: int):
+    conn = get_db_connection()
+    if not conn:
+        raise HTTPException(status_code=500, detail="Database connection failed")
+
+    try:
+        cur = conn.cursor(cursor_factory=DictCursor)
+        
+        # 1. Busca os dados principais do anime, incluindo os novos campos
+        cur.execute("""
+            SELECT 
+                mal_id, title, title_japanese, synopsis, episodes, status, rank, score, 
+                season, year, image_url, trailer_embed_url, type, source, duration, favorites 
+            FROM animes 
+            WHERE mal_id = %s;
+        """, (mal_id,))
+        anime = cur.fetchone()
+        
+        if not anime:
+            raise HTTPException(status_code=404, detail="Anime não encontrado.")
+
+        anime_details = dict(anime)
+
+        # 2. Busca e adiciona os gêneros
+        cur.execute("""
+            SELECT g.name FROM animes_genres ag 
+            JOIN genres g ON ag.genre_mal_id = g.mal_id 
+            WHERE ag.anime_mal_id = %s;
+        """, (mal_id,))
+        anime_details['genres'] = [row['name'] for row in cur.fetchall()]
+
+        # 3. Busca e adiciona os estúdios
+        cur.execute("""
+            SELECT s.name FROM animes_studios ast 
+            JOIN studios s ON ast.studio_mal_id = s.mal_id 
+            WHERE ast.anime_mal_id = %s;
+        """, (mal_id,))
+        anime_details['studios'] = [row['name'] for row in cur.fetchall()]
+
+        # 4. Busca e adiciona os serviços de streaming com URL
+        cur.execute("""
+            SELECT ss.name, ss.url FROM animes_streaming a_s 
+            JOIN streaming_services ss ON a_s.service_id = ss.id 
+            WHERE a_s.anime_mal_id = %s;
+        """, (mal_id,))
+        anime_details['streaming'] = [dict(row) for row in cur.fetchall()]
+
+        # 5. Busca personagens e dubladores (básico)
+        cur.execute("""
+            SELECT 
+                c.mal_id, c.name, c.image_url, 
+                va.mal_id AS va_mal_id, va.name AS va_name, va.image_url AS va_image_url, va.language AS va_language
+            FROM animes_characters ac
+            JOIN characters c ON ac.character_mal_id = c.mal_id
+            LEFT JOIN characters_voice_actors cva ON c.mal_id = cva.character_mal_id
+            LEFT JOIN voice_actors va ON cva.voice_actor_mal_id = va.mal_id
+            WHERE ac.anime_mal_id = %s;
+        """, (mal_id,))
+        
+        characters_raw = cur.fetchall()
+        characters_dict = {}
+        for row in characters_raw:
+            char_id = row['mal_id']
+            if char_id not in characters_dict:
+                characters_dict[char_id] = {
+                    'mal_id': char_id,
+                    'name': row['name'],
+                    'image_url': row['image_url'],
+                    'voice_actors': []
+                }
+            if row['va_mal_id']:
+                characters_dict[char_id]['voice_actors'].append({
+                    'mal_id': row['va_mal_id'],
+                    'name': row['va_name'],
+                    'image_url': row['va_image_url'],
+                    'language': row['va_language']
+                })
+        
+        anime_details['characters'] = list(characters_dict.values())
+        
+        return anime_details
+
+    except (Exception, psycopg2.DatabaseError) as error:
+        print(f"Erro na consulta SQL para o anime ID {mal_id}: {error}")
+        raise HTTPException(status_code=500, detail="Ocorreu um erro ao buscar os detalhes do anime.")
+    finally:
+        if conn:
+            cur.close()
+            conn.close()
+
 @app.get("/character/{mal_id}")
 def get_character_details(mal_id: int):
     conn = get_db_connection()
@@ -424,13 +448,11 @@ def get_character_details(mal_id: int):
     try:
         cur = conn.cursor(cursor_factory=DictCursor)
         
-        # 1. Busca os dados principais e detalhes do personagem
+        # 1. Busca todos os dados do personagem de uma vez
         cur.execute("""
-            SELECT c.mal_id, c.name, c.image_url, 
-                   cd.about, cd.favorites
-            FROM characters c
-            LEFT JOIN character_details cd ON c.mal_id = cd.mal_id
-            WHERE c.mal_id = %s;
+            SELECT mal_id, name, name_kanji, nicknames, favorites, about, image_url
+            FROM characters
+            WHERE mal_id = %s;
         """, (mal_id,))
         character = cur.fetchone()
         
@@ -448,11 +470,10 @@ def get_character_details(mal_id: int):
 
         # 3. Busca e adiciona os dubladores e seus detalhes completos
         cur.execute("""
-            SELECT va.mal_id, va.name, va.image_url,
-                   vad.about, vad.birthday
+            SELECT 
+                va.mal_id, va.name, va.image_url, va.birthday, va.about, va.language
             FROM characters_voice_actors cva
             JOIN voice_actors va ON cva.voice_actor_mal_id = va.mal_id
-            LEFT JOIN voice_actor_details vad ON va.mal_id = vad.mal_id
             WHERE cva.character_mal_id = %s;
         """, (mal_id,))
         
@@ -478,13 +499,11 @@ def get_voice_actor_details(mal_id: int):
     try:
         cur = conn.cursor(cursor_factory=DictCursor)
         
-        # 1. Busca os dados principais e detalhes do dublador
+        # 1. Busca todos os dados do dublador de uma vez
         cur.execute("""
-            SELECT va.mal_id, va.name, va.image_url,
-                   vad.about, vad.birthday
-            FROM voice_actors va
-            LEFT JOIN voice_actor_details vad ON va.mal_id = vad.mal_id
-            WHERE va.mal_id = %s;
+            SELECT mal_id, name, image_url, birthday, about, language
+            FROM voice_actors
+            WHERE mal_id = %s;
         """, (mal_id,))
         voice_actor = cur.fetchone()
         
@@ -493,7 +512,7 @@ def get_voice_actor_details(mal_id: int):
 
         voice_actor_details = dict(voice_actor)
 
-        # 2. Busca e adiciona os personagens dublados
+        # 2. Busca e adiciona os personagens dublados por ele
         cur.execute("""
             SELECT c.mal_id, c.name, c.image_url
             FROM characters_voice_actors cva

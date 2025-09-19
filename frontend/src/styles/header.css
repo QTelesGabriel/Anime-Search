@@ -14,12 +14,27 @@
     font-size: 36px;
 }
 
+/* Novo estilo para o container do ícone e do título */
+.header-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px; /* Espaço entre o ícone e o texto */
+}
+
+/* Novo estilo para o ícone SVG */
+.header-icon {
+    width: 32px; /* Define o tamanho do ícone */
+    height: 32px;
+    color: #FF8484; /* Adiciona cor para o ícone */
+}
+
+/* Os estilos abaixo não foram alterados, mas estão aqui para referência */
 .signup {
     font-size: 20px;
     text-decoration: none;
     font-weight: bold;
     margin: 0 24px;
-    color: #FFFFFF; /* Adicionado para garantir a cor do texto */
+    color: #FFFFFF;
     transition: font-size 0.3s ease, text-decoration 0.3s ease;
 }
 
@@ -36,7 +51,7 @@
     padding: 8px 30px;
     background-color: #FF8484;
     border-radius: 10px;
-    color: #FFFFFF; /* Adicionado para garantir a cor do texto */
+    color: #FFFFFF;
     transition: font-size 0.3s ease, text-decoration 0.3s ease;
 }
 
@@ -50,11 +65,11 @@
     text-decoration: none;
     font-weight: bold;
     margin: 0 24px;
-    background: none; /* Remove o fundo */
-    border: none; /* Remove a borda */
-    color: #FFFFFF; /* Garante que o texto seja branco */
-    cursor: pointer; /* Adiciona o cursor de clique */
-    transition: font-size 0.3s ease, text-decoration 0.3s ease; /* Adiciona transição suave */
+    background: none;
+    border: none;
+    color: #FFFFFF;
+    cursor: pointer;
+    transition: font-size 0.3s ease, text-decoration 0.3s ease;
 }
 
 .logout-button:hover {
@@ -70,7 +85,7 @@
     padding: 8px 30px;
     background-color: #FF8484;
     border-radius: 10px;
-    color: #FFFFFF; /* Adicionado para garantir a cor do texto */
+    color: #FFFFFF;
     transition: font-size 0.3s ease, text-decoration 0.3s ease;
 }
 
@@ -87,7 +102,7 @@
     padding: 8px 30px;
     background-color: #FF8484;
     border-radius: 10px;
-    color: #FFFFFF; /* Adicionado para garantir a cor do texto */
+    color: #FFFFFF;
     transition: font-size 0.3s ease, text-decoration 0.3s ease;
 }
 

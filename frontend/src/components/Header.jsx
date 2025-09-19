@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthProvider';
 import { Link, useLocation } from 'react-router-dom';
-import ConfirmModal from './ConfirmModal'; // Importe o novo componente
+import ConfirmModal from './ConfirmModal';
+import Mascote from '../assets/Mascote.png';
 import '../styles/header.css';
 
 const Header = () => {
@@ -12,21 +13,20 @@ const Header = () => {
     const [showLogoutModal, setShowLogoutModal] = useState(false);
 
     const handleLogout = () => {
-        setShowLogoutModal(true); // Abre o modal ao clicar em "Sair"
+        setShowLogoutModal(true);
     };
 
     const confirmLogout = () => {
-        logout(); // Chama a função de logout real
-        setShowLogoutModal(false); // Fecha o modal
+        logout();
+        setShowLogoutModal(false);
     };
 
     const cancelLogout = () => {
-        setShowLogoutModal(false); // Apenas fecha o modal
+        setShowLogoutModal(false);
     };
 
     let links;
     if (isLoggedIn) {
-        // Exibe o botão que abre o modal
         const logoutButton = <button onClick={handleLogout} className="logout-button">Sair</button>;
 
         if (path === "/profile") {
@@ -58,11 +58,14 @@ const Header = () => {
 
     return (
         <nav className="header">
-            <h1 className="header__title">AnimeSearch</h1>
+            {/* O h1 foi substituído por um div para ter mais controle sobre o layout do ícone e do texto */}
+            <div className="header-brand">
+                <img src={Mascote} alt="Mascote do site" className="header-icon" />
+                <h1 className="header__title">AnimeSearch</h1>
+            </div>
             <div>
                 {links}
             </div>
-            {/* Renderiza o modal se o estado for true */}
             {showLogoutModal && (
                 <ConfirmModal
                     message="Você tem certeza que deseja sair?"

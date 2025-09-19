@@ -40,10 +40,10 @@ def get_db_connection():
 # -----------------
 # Arquivos de persistência
 # -----------------
-PAGE_FILE = "cache/last_page.json"
-ANIME_CACHE_FILE = "cache/anime_cache.json"
-CHARACTER_CACHE_FILE = "cache/character_cache.json"
-VOICE_ACTOR_CACHE_FILE = "cache/voice_actor_cache.json"
+PAGE_FILE = "backend/data_processing/cache/last_page.json"
+ANIME_CACHE_FILE = "backend/data_processing/cache/anime_cache.json"
+CHARACTER_CACHE_FILE = "backend/data_processing/cache/character_cache.json"
+VOICE_ACTOR_CACHE_FILE = "backend/data_processing/cache/voice_actor_cache.json"
 
 # -----------------
 # Funções utilitárias
@@ -80,8 +80,11 @@ voice_actor_cache = load_json_set(VOICE_ACTOR_CACHE_FILE)
 # -----------------
 def insert_anime(cursor, anime):
     query = """
-    INSERT INTO animes (mal_id, title, title_japanese, synopsis, episodes, status, rank, score, season, year, image_url, trailer_embed_url)
-    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+    INSERT INTO animes (
+        mal_id, title, title_japanese, synopsis, episodes, status, rank, score, 
+        season, year, image_url, trailer_embed_url, type, source, duration, favorites
+    )
+    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
     ON CONFLICT (mal_id) DO UPDATE SET
         title = EXCLUDED.title,
         title_japanese = EXCLUDED.title_japanese,
@@ -93,7 +96,11 @@ def insert_anime(cursor, anime):
         season = EXCLUDED.season,
         year = EXCLUDED.year,
         image_url = EXCLUDED.image_url,
-        trailer_embed_url = EXCLUDED.trailer_embed_url;
+        trailer_embed_url = EXCLUDED.trailer_embed_url,
+        type = EXCLUDED.type,
+        source = EXCLUDED.source,
+        duration = EXCLUDED.duration,
+        favorites = EXCLUDED.favorites;
     """
     cursor.execute(query, (
         anime.get('mal_id'),
@@ -107,7 +114,11 @@ def insert_anime(cursor, anime):
         anime.get('season'),
         anime.get('year'),
         anime.get('images', {}).get('jpg', {}).get('large_image_url'),
-        anime.get('trailer', {}).get('embed_url')
+        anime.get('trailer', {}).get('embed_url'),
+        anime.get('type'),
+        anime.get('source'),
+        anime.get('duration'),
+        anime.get('favorites')
     ))
 
     print(f"[ANIME] Inserido/Atualizado: {anime.get('title')} (ID {anime.get('mal_id')})")
@@ -145,30 +156,35 @@ def insert_entity(cursor, table_name, mal_id, name, url=None):
 
         print(f"[{table_name.upper()}] Inserido/Atualizado: {name} (ID {mal_id})")
 
-def insert_voice_actor(cursor, mal_id, name, image_url=None, birthday=None, about=None):
+def insert_voice_actor(cursor, mal_id, name, image_url=None, birthday=None, about=None, language=None):
+    """Insere ou atualiza um dublador no banco, incluindo a língua, aniversário e 'about'."""
     query = """
-    INSERT INTO voice_actors (mal_id, name, image_url, birthday, about)
-    VALUES (%s, %s, %s, %s, %s)
+    INSERT INTO voice_actors (mal_id, name, image_url, birthday, about, language)
+    VALUES (%s, %s, %s, %s, %s, %s)
     ON CONFLICT (mal_id) DO UPDATE SET
         name = EXCLUDED.name,
         image_url = COALESCE(EXCLUDED.image_url, voice_actors.image_url),
         birthday = COALESCE(EXCLUDED.birthday, voice_actors.birthday),
-        about = COALESCE(EXCLUDED.about, voice_actors.about);
+        about = COALESCE(EXCLUDED.about, voice_actors.about),
+        language = COALESCE(EXCLUDED.language, voice_actors.language);
     """
-    cursor.execute(query, (mal_id, name, image_url, birthday, about))
+    cursor.execute(query, (mal_id, name, image_url, birthday, about, language))
+    print(f"[DUBLADOR] Inserido/Atualizado: {name} (ID {mal_id}) - Língua: {language}")
 
-    print(f"[DUBLADOR] Inserido/Atualizado: {name} (ID {mal_id})")
-
-def insert_character(cursor, mal_id, name, image_url=None):
+def insert_character(cursor, mal_id, name, image_url=None, name_kanji=None, nicknames=None, favorites=None, about=None):
+    """Insere ou atualiza um personagem com todos os campos."""
     query = """
-    INSERT INTO characters (mal_id, name, image_url)
-    VALUES (%s, %s, %s)
+    INSERT INTO characters (mal_id, name, name_kanji, nicknames, favorites, about, image_url)
+    VALUES (%s, %s, %s, %s, %s, %s, %s)
     ON CONFLICT (mal_id) DO UPDATE SET
         name = EXCLUDED.name,
+        name_kanji = COALESCE(EXCLUDED.name_kanji, characters.name_kanji),
+        nicknames = COALESCE(EXCLUDED.nicknames, characters.nicknames),
+        favorites = COALESCE(EXCLUDED.favorites, characters.favorites),
+        about = COALESCE(EXCLUDED.about, characters.about),
         image_url = COALESCE(EXCLUDED.image_url, characters.image_url);
     """
-    cursor.execute(query, (mal_id, name, image_url))
-
+    cursor.execute(query, (mal_id, name, name_kanji, nicknames, favorites, about, image_url))
     print(f"[CHARACTER] Inserido/Atualizado: {name} (ID {mal_id})")
 
 def insert_character_picture(cursor, character_id, image_url):
@@ -279,15 +295,32 @@ def process_anime(cursor, anime_id):
         return
 
     for entry in characters_data:
+        if entry.get('role') != 'Main':
+            continue
+
         char_info = entry.get('character')
         if not char_info or char_info.get('mal_id') in character_cache:
             continue
-        character_cache.add(char_info['mal_id'])
 
-        insert_character(cursor, char_info.get('mal_id'), char_info.get('name'), char_info.get('images', {}).get('jpg', {}).get('image_url'))
+        # Busca os detalhes completos do personagem
+        char_full_data = fetch_json(f"{JIKAN_BASE_URL}/characters/{char_info.get('mal_id')}/full")
+
+        if char_full_data:
+            insert_character(
+                cursor,
+                char_full_data.get('mal_id'),
+                char_full_data.get('name'),
+                image_url=char_full_data.get('images', {}).get('jpg', {}).get('image_url'),
+                name_kanji=char_full_data.get('name_kanji'),
+                nicknames=', '.join(char_full_data.get('nicknames', [])),
+                favorites=char_full_data.get('favorites'),
+                about=char_full_data.get('about')
+            )
+            character_cache.add(char_full_data.get('mal_id'))
+        
         insert_junction(cursor, 'animes_characters', anime_id=anime_id, related_id=char_info.get('mal_id'))
 
-        # Fotos extras
+        # Fotos extras do personagem
         pictures = fetch_json(f"{JIKAN_BASE_URL}/characters/{char_info.get('mal_id')}/pictures")
         if pictures:
             for pic in pictures:
@@ -295,19 +328,29 @@ def process_anime(cursor, anime_id):
 
         # Voice Actors
         for va_entry in entry.get('voice_actors', []):
+            language = va_entry.get('language')
+            
+            if language not in ['Japanese', 'English', 'Portuguese (BR)']:
+                continue
+            
             va_info = va_entry.get('person')
             if not va_info or va_info.get('mal_id') in voice_actor_cache:
                 continue
-            voice_actor_cache.add(va_info.get('mal_id'))
 
-            insert_voice_actor(
-                cursor,
-                va_info.get('mal_id'),
-                va_info.get('name'),
-                image_url=va_info.get('images', {}).get('jpg', {}).get('image_url'),
-                birthday=va_info.get('birthday'),
-                about=va_info.get('about')
-            )
+            # Busca os detalhes completos do dublador
+            va_full_data = fetch_json(f"{JIKAN_BASE_URL}/people/{va_info.get('mal_id')}/full")
+            if va_full_data:
+                insert_voice_actor(
+                    cursor,
+                    va_full_data.get('mal_id'),
+                    va_full_data.get('name'),
+                    image_url=va_full_data.get('images', {}).get('jpg', {}).get('image_url'),
+                    birthday=va_full_data.get('birthday'),
+                    about=va_full_data.get('about'),
+                    language=language
+                )
+                voice_actor_cache.add(va_full_data.get('mal_id'))
+            
             insert_junction(cursor, 'characters_voice_actors', character_id=char_info.get('mal_id'), related_id=va_info.get('mal_id'))
 
 # -----------------
@@ -320,7 +363,7 @@ def main():
         print("[MAIN] Falha na conexão com o DB")
         return
 
-    os.makedirs("cache", exist_ok=True)
+    os.makedirs("backend/data_processing/cache", exist_ok=True)
     print("[MAIN] Pasta cache verificada/criada")
 
     try:

@@ -3,18 +3,24 @@ import { useParams } from 'react-router-dom';
 import Header from '../components/Header';
 import '../styles/character.css';
 
+// Função para formatar a data de nascimento
+const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    try {
+        const [datePart] = dateString.split('T');
+        const [year, month, day] = datePart.split('-');
+        return `${day}/${month}/${year}`;
+    } catch (e) {
+        return 'N/A';
+    }
+};
+
 const Character = () => {
     const { id } = useParams();
-    const API_BASE_URL = "http://localhost:8000"; // Seu backend
+    const API_BASE_URL = "http://localhost:8000";
 
     const [character, setCharacter] = useState(null);
     const [loading, setLoading] = useState(true);
-
-    const decodeHTML = (html) => {
-        const txt = document.createElement('textarea');
-        txt.innerHTML = html;
-        return txt.value;
-    };
 
     useEffect(() => {
         const getCharacterFullByID = async () => {
@@ -53,25 +59,27 @@ const Character = () => {
 
                     <div className="character-info">
                         <h2>Character Details</h2>
+                        <p><strong>Kanji Name:</strong> {character.name_kanji || 'N/A'}</p>
+                        <p><strong>Nicknames:</strong> {character.nicknames || 'N/A'}</p>
                         <p><strong>Favorites:</strong> {character.favorites || 'N/A'}</p>
-                        <p><strong>About:</strong></p>
-                        {/* * Use dangerouslySetInnerHTML para renderizar o HTML da biografia
-                          * Isso é seguro porque o dado vem da API Jikan e não de um usuário
-                        */}
-                        <div dangerouslySetInnerHTML={{ __html: character.about?.replace(/\\n/g, '<br/>') || 'N/A' }}></div>
                     </div>
                 </div>
 
-                {/* * --- 
-                  * Nova seção para as fotos do personagem
-                  * --- 
-                */}
+                <h2 className="section-title">About the Character</h2>
+                <div className="about-content" dangerouslySetInnerHTML={{ __html: character.about?.replace(/\\n/g, '<br/>') || 'N/A' }}></div>
+
                 {character.pictures && character.pictures.length > 0 && (
                     <>
                         <h2 className="section-title">Pictures</h2>
                         <div className="character-pictures-grid">
                             {character.pictures.map((pic, index) => (
-                                <img key={index} src={pic.image_url} alt={`${character.name} picture ${index}`} className="character-pic" />
+                                <a key={index} href={pic} target="_blank" rel="noopener noreferrer">
+                                    <img 
+                                        src={pic} 
+                                        alt={`${character.name} picture ${index}`} 
+                                        className="character-pic" 
+                                    />
+                                </a>
                             ))}
                         </div>
                     </>
@@ -93,9 +101,9 @@ const Character = () => {
                                 </div>
                             </a>
                             <div className="voice-actor-details">
-                                <p><strong>Birthday:</strong> {actor.birthday || 'N/A'}</p>
+                                <p><strong>Birthday:</strong> {formatDate(actor.birthday)}</p>
                                 <p><strong>About:</strong></p>
-                                <div dangerouslySetInnerHTML={{ __html: actor.about?.replace(/\\n/g, '<br/>') || 'N/A' }}></div>
+                                <div className="about-content" dangerouslySetInnerHTML={{ __html: actor.about?.replace(/\\n/g, '<br/>') || 'N/A' }}></div>
                             </div>
                         </div>
                     ))}

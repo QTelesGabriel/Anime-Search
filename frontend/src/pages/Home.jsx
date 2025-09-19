@@ -15,7 +15,8 @@ const Home = () => {
     const [genres, setGenres] = useState([]);
     const [selectedGenre, setSelectedGenre] = useState('');
 
-    // Buscar melhores avaliações e gêneros disponíveis
+    // Efeito para buscar dados iniciais: melhores animes e lista de gêneros
+    // A lógica de persistência de gênero foi adicionada aqui
     useEffect(() => {
         const fetchInitialData = async () => {
             try {
@@ -29,8 +30,14 @@ const Home = () => {
                 const jsonGenres = await resGenres.json();
                 setGenres(jsonGenres);
 
-                // Se houver pelo menos um gênero, seleciona o primeiro
-                if (jsonGenres.length > 0) {
+                // NOVO: Verifica se há um gênero salvo no localStorage
+                const storedGenre = localStorage.getItem('selectedGenre');
+
+                if (storedGenre && jsonGenres.some(g => g.name === storedGenre)) {
+                    // Se houver e for válido, usa o gênero salvo
+                    setSelectedGenre(storedGenre);
+                } else if (jsonGenres.length > 0) {
+                    // Caso contrário, seleciona o primeiro gênero da lista
                     setSelectedGenre(jsonGenres[0].name);
                 }
             } catch (error) {
@@ -40,6 +47,14 @@ const Home = () => {
 
         fetchInitialData();
     }, []);
+
+    // Efeito para salvar o gênero selecionado no localStorage
+    // Ele executa toda vez que 'selectedGenre' muda
+    useEffect(() => {
+        if (selectedGenre) {
+            localStorage.setItem('selectedGenre', selectedGenre);
+        }
+    }, [selectedGenre]);
 
     // Buscar animes do gênero selecionado
     useEffect(() => {

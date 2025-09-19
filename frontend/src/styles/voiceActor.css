@@ -43,6 +43,21 @@
     font-weight: bold;
 }
 
+/* Nova seção para o about do dublador */
+.voice-actor-info .about-content {
+    max-height: 300px;
+    overflow-y: auto;
+    padding-right: 10px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    color: #ccc;
+    text-align: justify;
+}
+
+/* ------------------ */
+/* Estilos para a grid de personagens - já existentes */
+/* ------------------ */
+
 .section-title {
     margin-top: 30px;
     margin-bottom: 15px;

@@ -3,18 +3,24 @@ import { useParams } from 'react-router-dom';
 import Header from '../components/Header';
 import '../styles/voiceActor.css';
 
+// Função para formatar a data de nascimento
+const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    try {
+        const [datePart] = dateString.split('T');
+        const [year, month, day] = datePart.split('-');
+        return `${day}/${month}/${year}`;
+    } catch (e) {
+        return 'N/A';
+    }
+};
+
 const VoiceActor = () => {
     const { id } = useParams();
     const API_BASE_URL = "http://localhost:8000";
 
     const [voiceActor, setVoiceActor] = useState(null);
     const [loading, setLoading] = useState(true);
-
-    const decodeHTML = (html) => {
-        const txt = document.createElement('textarea');
-        txt.innerHTML = html;
-        return txt.value;
-    };
 
     useEffect(() => {
         const getVoiceActorDetails = async () => {
@@ -53,10 +59,9 @@ const VoiceActor = () => {
 
                     <div className="voice-actor-info">
                         <h2>Voice Actor Details</h2>
-                        <p><strong>Birthday:</strong> {voiceActor.birthday || 'N/A'}</p>
+                        <p><strong>Birthday:</strong> {formatDate(voiceActor.birthday)}</p>
                         <p><strong>About:</strong></p>
-                        {/* Use dangerouslySetInnerHTML para renderizar o HTML da biografia */}
-                        <div dangerouslySetInnerHTML={{ __html: voiceActor.about?.replace(/\\n/g, '<br/>') || 'N/A' }}></div>
+                        <div className="about-content" dangerouslySetInnerHTML={{ __html: voiceActor.about?.replace(/\\n/g, '<br/>') || 'N/A' }}></div>
                     </div>
                 </div>
 
