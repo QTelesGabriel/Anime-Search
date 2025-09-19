@@ -1,10 +1,11 @@
 import psycopg2
 import os
-from fastapi import FastAPI, HTTPException, status, Query
+from fastapi import FastAPI, HTTPException, status, Query, Path
 from fastapi.middleware.cors import CORSMiddleware
 from surprise import dump
 
 from pydantic import BaseModel
+from typing import List, Dict
 
 # Assumindo que você tem esses arquivos no mesmo diretório ou em um pacote importável
 from .auth import hash_password, verify_password
@@ -166,8 +167,12 @@ def get_top_animes():
         if conn:
             conn.close()
 
-@app.get("/animes/popular")
-def get_popular_animes():
+# Rota para obter a lista de todos os gêneros
+@app.get("/animes/genres", response_model=List[Dict])
+def get_all_genres():
+    """
+    Busca a lista de todos os gêneros disponíveis.
+    """
     conn = get_db_connection()
     if not conn:
         raise HTTPException(status_code=500, detail="Erro de conexão com o banco de dados")
@@ -175,12 +180,40 @@ def get_popular_animes():
     try:
         cursor = conn.cursor(cursor_factory=DictCursor)
         cursor.execute("""
-            SELECT mal_id, title, image_url
-            FROM animes
-            WHERE members IS NOT NULL
-            ORDER BY members DESC
-            LIMIT 20;
+            SELECT mal_id, name FROM genres ORDER BY name;
         """)
+        genres = cursor.fetchall()
+        return [dict(row) for row in genres]
+    except psycopg2.Error as e:
+        raise HTTPException(status_code=500, detail=f"Erro no banco de dados: {e}")
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+        if conn:
+            conn.close()
+
+# Rota para obter animes por gênero
+@app.get("/animes/genre/{genre_name}", response_model=List[Dict])
+def get_animes_by_genre(genre_name: str = Path(..., title="Nome do Gênero")):
+    """
+    Busca os melhores animes de um gênero específico, ordenados por score.
+    """
+    conn = get_db_connection()
+    if not conn:
+        raise HTTPException(status_code=500, detail="Erro de conexão com o banco de dados")
+
+    try:
+        cursor = conn.cursor(cursor_factory=DictCursor)
+        query = """
+            SELECT a.mal_id, a.title, a.image_url, a.score
+            FROM animes a
+            JOIN animes_genres ag ON a.mal_id = ag.anime_mal_id
+            JOIN genres g ON ag.genre_mal_id = g.mal_id
+            WHERE g.name = %s
+            ORDER BY a.score DESC
+            LIMIT 20;
+        """
+        cursor.execute(query, (genre_name,))
         animes = cursor.fetchall()
         return [dict(row) for row in animes]
     except psycopg2.Error as e:

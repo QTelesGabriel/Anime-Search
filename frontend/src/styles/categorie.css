@@ -26,3 +26,42 @@
     font-size: 22px;
     text-decoration: underline;
 }
+
+.genre-select-container {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    font-family: 'Arial', sans-serif;
+}
+
+.genre-select-container label {
+    font-weight: bold;
+    font-size: 16px;
+    color: #333;
+}
+
+.genre-select-container select {
+    padding: 8px 12px;
+    font-size: 16px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    background-color: #fff;
+    color: #333;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+.genre-select-container select:hover {
+    border-color: #888;
+}
+
+.genre-select-container select:focus {
+    outline: none;
+    border-color: #4a90e2;
+    box-shadow: 0 0 5px rgba(74, 144, 226, 0.5);
+}
+
+.genre-select-container select option {
+    padding: 10px;
+    font-size: 16px;
+}

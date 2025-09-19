@@ -1,0 +1,33 @@
+.genre-select {
+    margin: 32px 34px;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+}
+
+.genre-select__dropdown {
+    border-radius: 10px;
+    height: 42px;
+    width: 300px;
+    padding: 0 12px;
+    font-size: 18px;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.genre-select__dropdown:hover {
+    border-color: #FF8484;
+}
+
+.genre-select__dropdown:focus {
+    outline: none;
+    border-color: #FF6B6B;
+    box-shadow: 0 0 5px rgba(255, 132, 132, 0.5);
+}
+
+.genre-select__dropdown option {
+    font-size: 16px;
+    padding: 8px;
+}

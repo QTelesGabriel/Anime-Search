@@ -2,35 +2,61 @@ import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import SearchBar from '../components/SearchBar';
 import AnimeCarousel from '../components/AnimeCarousel';
+import GenreSelect from '../components/GenreSelect';
 import '../styles/categorie.css';
 
 const Home = () => {
     const API_BASE_URL = "http://localhost:8000";
 
     const [bestAnimes, setBestAnimes] = useState([]);
-    const [popularAnimes, setPopularAnimes] = useState([]);
+    const [genreAnimes, setGenreAnimes] = useState([]);
     const [searchResults, setSearchResults] = useState([]);
     const [search, setSearch] = useState('');
+    const [genres, setGenres] = useState([]);
+    const [selectedGenre, setSelectedGenre] = useState('');
 
+    // Buscar melhores avaliações e gêneros disponíveis
     useEffect(() => {
-        const fetchAnimes = async () => {
+        const fetchInitialData = async () => {
             try {
-                // Requisição para o seu backend para as melhores avaliações
+                // Melhores avaliações
                 const resTop = await fetch(`${API_BASE_URL}/animes/top`);
                 const jsonTop = await resTop.json();
-                setBestAnimes(jsonTop); // Assumindo que a resposta já é a lista de animes
+                setBestAnimes(jsonTop);
 
-                // Requisição para o seu backend para os mais populares
-                const resPopular = await fetch(`${API_BASE_URL}/animes/popular`);
-                const jsonPopular = await resPopular.json();
-                setPopularAnimes(jsonPopular); // Assumindo que a resposta já é a lista de animes
+                // Lista de gêneros
+                const resGenres = await fetch(`${API_BASE_URL}/animes/genres`);
+                const jsonGenres = await resGenres.json();
+                setGenres(jsonGenres);
+
+                // Se houver pelo menos um gênero, seleciona o primeiro
+                if (jsonGenres.length > 0) {
+                    setSelectedGenre(jsonGenres[0].name);
+                }
             } catch (error) {
-                console.error('Erro ao buscar animes:', error);
+                console.error('Erro ao buscar dados iniciais:', error);
             }
         };
 
-        fetchAnimes();
+        fetchInitialData();
     }, []);
+
+    // Buscar animes do gênero selecionado
+    useEffect(() => {
+        if (!selectedGenre) return;
+
+        const fetchGenreAnimes = async () => {
+            try {
+                const res = await fetch(`${API_BASE_URL}/animes/genre/${encodeURIComponent(selectedGenre)}`);
+                const json = await res.json();
+                setGenreAnimes(json);
+            } catch (error) {
+                console.error('Erro ao buscar animes por gênero:', error);
+            }
+        };
+
+        fetchGenreAnimes();
+    }, [selectedGenre]);
 
     const handleSearch = async () => {
         if (search.trim() === '') {
@@ -39,7 +65,6 @@ const Home = () => {
         }
 
         try {
-            // Requisição para o seu backend para a busca
             const res = await fetch(`${API_BASE_URL}/animes/search?q=${encodeURIComponent(search)}`);
             const json = await res.json();
             setSearchResults(json);
@@ -63,15 +88,25 @@ const Home = () => {
                     <AnimeCarousel animes={searchResults} />
                     <h2 className="title">Best Ratings</h2>
                     <AnimeCarousel animes={bestAnimes} />
-                    <h2 className="title">Most Popular</h2>
-                    <AnimeCarousel animes={popularAnimes} />
+                    <GenreSelect
+                        genres={genres}
+                        selectedGenre={selectedGenre}
+                        setSelectedGenre={setSelectedGenre}
+                    />
+                    <h2 className="title">Top Animes in {selectedGenre}</h2>
+                    <AnimeCarousel animes={genreAnimes} />
                 </>
             ) : (
                 <>
                     <h2 className="title">Best Ratings</h2>
                     <AnimeCarousel animes={bestAnimes} />
-                    <h2 className="title">Most Popular</h2>
-                    <AnimeCarousel animes={popularAnimes} />
+                    <GenreSelect
+                        genres={genres}
+                        selectedGenre={selectedGenre}
+                        setSelectedGenre={setSelectedGenre}
+                    />
+                    <h2 className="title">Top Animes in {selectedGenre}</h2>
+                    <AnimeCarousel animes={genreAnimes} />
                 </>
             )}
         </>
