@@ -1,8 +1,10 @@
 import psycopg2
+import threading
 import os
 from fastapi import FastAPI, HTTPException, status, Query, Path
 from fastapi.middleware.cors import CORSMiddleware
 from surprise import dump
+from typing import Optional
 
 from pydantic import BaseModel
 from typing import List, Dict
@@ -80,6 +82,8 @@ origins = [
     "http://127.0.0.1:3000",
     "http://localhost:5173",
     "http://127.0.0.1:5173",
+    "http://localhost:5174",
+    "http://127.0.0.1:5174",
 ]
 
 app.add_middleware(
@@ -101,12 +105,12 @@ def register_user(user: UserCreate):
 
     try:
         cursor = conn.cursor()
-        cursor.execute("SELECT 1 FROM login WHERE username = %s;", (user.username,))
+        cursor.execute("SELECT 1 FROM users WHERE username = %s;", (user.username,))
         if cursor.fetchone():
             raise HTTPException(status_code=400, detail="Usuário já registrado.")
         
         hashed_password = hash_password(user.password)
-        insert_query = "INSERT INTO login (username, hashed_password) VALUES (%s, %s);"
+        insert_query = "INSERT INTO users (username, hashed_password) VALUES (%s, %s);"
         cursor.execute(insert_query, (user.username, hashed_password))
         conn.commit()
 
@@ -130,7 +134,7 @@ def login_user(user: UserLogin):
     try:
         cursor = conn.cursor()
         
-        cursor.execute("SELECT user_id, hashed_password FROM login WHERE username = %s;", (user.username,))
+        cursor.execute("SELECT user_id, hashed_password FROM users WHERE username = %s;", (user.username,))
         result = cursor.fetchone()
 
         if not result:
@@ -159,7 +163,7 @@ def read_root():
     return {"Hello": "Welcome to the Anime API"}
     
 @app.get("/animes/top")
-def get_top_animes():
+def get_top_animes(limit: int = 20): # NOVO: Adiciona o parâmetro de limite
     conn = get_db_connection()
     if not conn:
         raise HTTPException(status_code=500, detail="Erro de conexão com o banco de dados")
@@ -171,8 +175,8 @@ def get_top_animes():
             FROM animes
             WHERE score IS NOT NULL
             ORDER BY score DESC
-            LIMIT 20;
-        """)
+            LIMIT %s;
+        """, (limit,)) # NOVO: Usa a variável 'limit'
         animes = cursor.fetchall()
         return [dict(row) for row in animes]
     except psycopg2.Error as e:
@@ -210,7 +214,7 @@ def get_all_genres():
 
 # Rota para obter animes por gênero
 @app.get("/animes/genre/{genre_name}", response_model=List[Dict])
-def get_animes_by_genre(genre_name: str = Path(..., title="Nome do Gênero")):
+def get_animes_by_genre(genre_name: str = Path(..., title="Nome do Gênero"), limit: int = 20): # NOVO
     """
     Busca os melhores animes de um gênero específico, ordenados por score.
     """
@@ -226,10 +230,11 @@ def get_animes_by_genre(genre_name: str = Path(..., title="Nome do Gênero")):
             JOIN animes_genres ag ON a.mal_id = ag.anime_mal_id
             JOIN genres g ON ag.genre_mal_id = g.mal_id
             WHERE g.name = %s
+            AND a.score IS NOT NULL
             ORDER BY a.score DESC
-            LIMIT 20;
+            LIMIT %s;
         """
-        cursor.execute(query, (genre_name,))
+        cursor.execute(query, (genre_name, limit)) # NOVO: Passa o limite para a query
         animes = cursor.fetchall()
         return [dict(row) for row in animes]
     except psycopg2.Error as e:
@@ -241,7 +246,7 @@ def get_animes_by_genre(genre_name: str = Path(..., title="Nome do Gênero")):
             conn.close()
 
 @app.get("/animes/search")
-def search_animes(q: str = Query(..., min_length=1)):
+def search_animes(q: str = Query(..., min_length=1), limit: int = 25): # NOVO
     conn = get_db_connection()
     if not conn:
         raise HTTPException(status_code=500, detail="Erro de conexão com o banco de dados")
@@ -253,9 +258,9 @@ def search_animes(q: str = Query(..., min_length=1)):
             SELECT mal_id, title, image_url
             FROM animes
             WHERE LOWER(title) LIKE %s
-            ORDER BY score DESC
-            LIMIT 25;
-        """, (search_query,))
+            ORDER BY COALESCE(score, 0) DESC
+            LIMIT %s;
+        """, (search_query, limit))
         animes = cursor.fetchall()
         return [dict(row) for row in animes]
     except psycopg2.Error as e:
@@ -267,7 +272,7 @@ def search_animes(q: str = Query(..., min_length=1)):
             conn.close()
 
 @app.get("/recommendations/{user_id}")
-def get_recommendations_svd(user_id: int):
+def get_recommendations_svd(user_id: int, limit: int = 20):
     conn = get_db_connection()
     if not conn:
         raise HTTPException(status_code=500, detail="Erro de conexão com o banco de dados")
@@ -277,7 +282,7 @@ def get_recommendations_svd(user_id: int):
 
         if svd_model is None:
             print("Modelo SVD não disponível. Retornando animes populares como fallback.")
-            cur.execute("SELECT mal_id, title, score, image_url FROM animes ORDER BY score DESC LIMIT 20;")
+            cur.execute("SELECT mal_id, title, score, image_url FROM animes WHERE score IS NOT NULL ORDER BY score DESC LIMIT %s;", (limit,))
             recommendations = cur.fetchall()
             return [dict(rec) for rec in recommendations]
 
@@ -300,7 +305,7 @@ def get_recommendations_svd(user_id: int):
 
         recommendations.sort(key=lambda x: x['predicted_rating'], reverse=True)
 
-        return recommendations[:20]
+        return recommendations[:limit]
 
     except (Exception, psycopg2.DatabaseError) as error:
         print(f"Erro na geração de recomendações: {error}")
@@ -315,34 +320,156 @@ class Rating(BaseModel):
     anime_id: int
     rating: int
 
-@app.post("/rate-anime", status_code=status.HTTP_201_CREATED)
-def rate_anime(rating: Rating):
+@app.post("/rate-anime")
+async def rate_anime(rating_data: Rating):
     conn = get_db_connection()
     if not conn:
         raise HTTPException(status_code=500, detail="Erro de conexão com o banco de dados")
 
+    # Use o cursor com DictCursor para maior compatibilidade
+    cursor = conn.cursor(cursor_factory=DictCursor)
+    
     try:
-        cur = conn.cursor()
+        # 1. Insere ou atualiza a nota na tabela 'ratings'
+        rating_query = "INSERT INTO ratings (user_id, anime_id, rating) VALUES (%s, %s, %s) ON CONFLICT (user_id, anime_id) DO UPDATE SET rating = EXCLUDED.rating"
+        cursor.execute(rating_query, (rating_data.user_id, rating_data.anime_id, rating_data.rating))
         
-        cur.execute("""
-            INSERT INTO ratings (user_id, anime_id, rating)
-            VALUES (%s, %s, %s)
-            ON CONFLICT (user_id, anime_id) DO UPDATE
-            SET rating = EXCLUDED.rating;
-        """, (rating.user_id, rating.anime_id, rating.rating))
+        # 2. Insere ou atualiza o anime na tabela 'anime_user' com status 'completed'
+        anime_user_query = "INSERT INTO anime_user (user_id, anime_id, status) VALUES (%s, %s, 'watching') ON CONFLICT (user_id, anime_id) DO UPDATE SET status = EXCLUDED.status"
+        cursor.execute(anime_user_query, (rating_data.user_id, rating_data.anime_id)) # Removendo 'completed'
         
         conn.commit()
         
-        return {"message": "Avaliação salva com sucesso!"}
-    
-    except psycopg2.Error as e:
+    except Exception as e:
         conn.rollback()
-        raise HTTPException(status_code=500, detail=f"Erro no banco de dados: {e}")
+        print(f"Erro na transação de avaliação: {e}")
+        raise HTTPException(status_code=400, detail=f"Erro ao processar a requisição: {e}")
     finally:
-        if 'cur' in locals():
-            cur.close()
+        if 'cursor' in locals():
+            cursor.close()
         if conn:
             conn.close()
+    
+    return {"message": "Avaliação e status da lista salvos com sucesso!"}
+
+@app.delete("/remove-rating/{user_id}/{anime_id}")
+async def remove_rating(user_id: int, anime_id: int):
+    """
+    Remove a nota de um anime para um usuário específico.
+    A operação DELETE não afeta o status do anime na tabela 'anime_user'.
+    """
+    conn = get_db_connection()
+    if not conn:
+        raise HTTPException(status_code=500, detail="Erro de conexão com o banco de dados")
+    
+    cursor = conn.cursor()
+    
+    try:
+        # Executa o comando SQL para deletar a nota
+        query = "DELETE FROM ratings WHERE user_id = %s AND anime_id = %s;"
+        cursor.execute(query, (user_id, anime_id))
+        
+        # Confirma a exclusão no banco de dados
+        conn.commit()
+        
+    except (Exception, psycopg2.DatabaseError) as error:
+        conn.rollback()
+        print(f"Erro ao remover a nota: {error}")
+        raise HTTPException(status_code=500, detail=f"Ocorreu um erro ao remover a nota: {error}")
+    
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+        if conn:
+            conn.close()
+
+    return {"message": "Nota removida com sucesso."}
+
+class AnimeStatus(BaseModel):
+    user_id: int
+    anime_id: int
+    status: Optional[str] = "watching"
+
+# Endpoint para verificar o status do anime na lista do usuário
+@app.get("/user-list-status/{user_id}/{anime_id}")
+async def get_user_list_status(user_id: int, anime_id: int):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    query = "SELECT EXISTS(SELECT 1 FROM anime_user WHERE user_id = %s AND anime_id = %s)"
+    cursor.execute(query, (user_id, anime_id))
+    is_in_list = cursor.fetchone()[0]
+    
+    conn.close()
+    
+    return {"is_in_list": is_in_list}
+
+# Endpoint para adicionar o anime à lista
+@app.post("/add-to-list")
+async def add_to_list(anime_status: AnimeStatus):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    try:
+        query = "INSERT INTO anime_user (user_id, anime_id, status) VALUES (%s, %s, %s)"
+        cursor.execute(query, (anime_status.user_id, anime_status.anime_id, anime_status.status))
+        conn.commit()
+        
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=400, detail=str(e))
+    finally:
+        conn.close()
+    
+    return {"message": "Anime adicionado à lista com sucesso!"}
+
+# Endpoint para remover o anime da lista
+@app.delete("/remove-from-list/{user_id}/{anime_id}")
+async def remove_from_list(user_id: int, anime_id: int):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    try:
+        query = "DELETE FROM anime_user WHERE user_id = %s AND anime_id = %s"
+        cursor.execute(query, (user_id, anime_id))
+
+        query = "DELETE FROM ratings WHERE user_id = %s AND anime_id = %s"
+        cursor.execute(query, (user_id, anime_id))
+
+        conn.commit()
+        
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=400, detail=str(e))
+    finally:
+        conn.close()
+    
+    return {"message": "Anime removido da lista com sucesso."}
+
+@app.get("/user-rating/{user_id}/{anime_id}")
+async def get_user_rating(user_id: int, anime_id: int):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    try:
+        # Busca a avaliação na tabela 'ratings'
+        query = "SELECT rating FROM ratings WHERE user_id = %s AND anime_id = %s"
+        cursor.execute(query, (user_id, anime_id))
+        result = cursor.fetchone()
+        
+        if result:
+            # Se a avaliação for encontrada, retorna a nota
+            return {"rating": result[0]}
+        else:
+            # Se a avaliação não for encontrada, retorna 0 ou um valor indicando que não há nota
+            return {"rating": 0}
+
+    except Exception as e:
+        print(f"Erro ao buscar avaliação do usuário: {e}")
+        raise HTTPException(status_code=500, detail="Internal Server Error")
+    
+    finally:
+        conn.close()
 
 # -----------------
 # Endpoints de Detalhes (Atualizados)
@@ -532,6 +659,7 @@ def get_voice_actor_details(mal_id: int):
             cur.close()
             conn.close()
             
+# Seu endpoint corrigido
 @app.get("/my-animes/{user_id}")
 def get_my_animes(user_id: int):
     conn = get_db_connection()
@@ -541,12 +669,15 @@ def get_my_animes(user_id: int):
     try:
         cur = conn.cursor(cursor_factory=DictCursor)
         
+        # AQUI ESTÁ A CORREÇÃO:
+        # A consulta agora faz o JOIN com a tabela 'anime_user'
+        # e seleciona apenas os animes que o usuário adicionou.
         cur.execute("""
-            SELECT a.mal_id, a.title, a.image_url, r.rating
+            SELECT a.mal_id, a.title, a.image_url
             FROM animes a
-            JOIN ratings r ON a.mal_id = r.anime_id
-            WHERE r.user_id = %s
-            ORDER BY r.rating DESC;
+            JOIN anime_user au ON a.mal_id = au.anime_id
+            WHERE au.user_id = %s
+            ORDER BY a.title ASC;
         """, (user_id,))
         
         my_animes_list = cur.fetchall()

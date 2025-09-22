@@ -10,3 +10,92 @@
     font-size: 48px;
     margin: 40px 0 30px 0;
 }
+
+/* Container que agrupa os botões de interação */
+.user-interaction-section {
+    width: 850px;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    margin: 20px 0px;
+}
+
+/* Estilo do botão de adicionar à lista */
+.add-to-list-button {
+    background-color: #ff5050;
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 18px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.1s;
+    text-transform: uppercase;
+}
+
+.add-to-list-button:hover {
+    background-color: #ff3535;
+    transform: translateY(-2px);
+}
+
+.add-to-list-button.added {
+    background-color: #ff5050; /* Cor para quando o anime já está na lista */
+    cursor: pointer;
+}
+
+.add-to-list-button:disabled {
+    background-color: #555; /* Cor para estado desabilitado */
+    cursor: not-allowed;
+}
+
+/* Estilo da seção de avaliação */
+.rating-section {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 5px;
+}
+
+.rating-section h3 {
+    color: #fff;
+    font-size: 20px;
+    margin-right: 10px;
+    font-weight: 500;
+}
+
+/* Estilo dos botões de nota */
+.rating-button {
+    background-color: #333;
+    color: #fff;
+    border: 1px solid #666;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s, border-color 0.3s;
+}
+
+.rating-button:hover:not(:disabled) {
+    background-color: #ff5050;
+    border-color: #ff5050;
+}
+
+/* Estilo para a nota selecionada */
+.rating-button.selected {
+    background-color: #ff5050;
+    border-color: #ff5050;
+}
+
+.rating-button:disabled {
+    background-color: #555;
+    border-color: #444;
+    cursor: not-allowed;
+    opacity: 0.6;
+}

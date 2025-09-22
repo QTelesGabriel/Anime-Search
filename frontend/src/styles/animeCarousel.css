@@ -33,3 +33,57 @@
     scrollbar-width: none;     /* Firefox */
 }
 
+.anime-carousel-wrapper {
+  position: relative;
+  margin-bottom: 50px;
+}
+
+.anime-carousel-viewport {
+  overflow-x: auto; /* permite swipe em mobile */
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  outline: none; /* foco controlado */
+}
+
+.anime-carousel-track {
+  display: flex;
+  gap: 0px; /* mantenha GAP_PX consistente com o JS */
+  padding: 8px 34px; /* igual ao seu design antigo */
+  align-items: flex-start;
+}
+
+.anime-carousel-item {
+  flex: 0 0 auto; /* evita encolher */
+  width: 170px; /* ajuste conforme seu AnimeCard — ou remova para usar largura interna do card */
+}
+
+/* setas */
+.carousel-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 5;
+  background: rgba(20,20,20,0.6);
+  border: none;
+  color: white;
+  width: 44px;
+  height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.carousel-arrow-left { left: 8px; }
+.carousel-arrow-right { right: 8px; }
+
+.carousel-arrow:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+/* opcional: esconder barra nativa em navegadores */
+.anime-carousel-viewport::-webkit-scrollbar { height: 8px; }
+.anime-carousel-viewport::-webkit-scrollbar-thumb { background: rgba(80,80,80,0.6); border-radius: 6px; }
+

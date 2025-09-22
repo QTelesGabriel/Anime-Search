@@ -248,23 +248,24 @@ def process_anime(cursor, anime_id):
         return
     anime_cache.add(anime_id)
 
+    # --- Busca dados completos do anime ---
     anime_data = fetch_json(f"{JIKAN_BASE_URL}/anime/{anime_id}/full")
     if not anime_data:
         return
 
     insert_anime(cursor, anime_data)
 
-    # Gêneros
+    # --- Gêneros ---
     for genre in anime_data.get('genres', []):
         insert_entity(cursor, 'genre', genre.get('mal_id'), genre.get('name'))
         insert_junction(cursor, 'animes_genres', anime_id=anime_id, related_id=genre.get('mal_id'))
 
-    # Studios
+    # --- Studios ---
     for studio in anime_data.get('studios', []):
         insert_entity(cursor, 'studio', studio.get('mal_id'), studio.get('name'))
         insert_junction(cursor, 'animes_studios', anime_id=anime_id, related_id=studio.get('mal_id'))
 
-    # Streaming
+    # --- Streaming ---
     for streaming in anime_data.get('streaming', []):
         streaming_mal_id = streaming.get('mal_id')
         streaming_name = streaming.get('name')
@@ -289,22 +290,28 @@ def process_anime(cursor, anime_id):
 
         insert_junction(cursor, 'animes_streaming', anime_id=anime_id, service_id=service_id)
 
-    # Characters e Voice Actors
+    # --- Characters e Voice Actors ---
     characters_data = fetch_json(f"{JIKAN_BASE_URL}/anime/{anime_id}/characters")
     if not characters_data:
         return
 
     for entry in characters_data:
+        # Somente personagens principais
         if entry.get('role') != 'Main':
             continue
 
         char_info = entry.get('character')
-        if not char_info or char_info.get('mal_id') in character_cache:
+        if not char_info:
+            continue
+
+        char_id = char_info.get('mal_id')
+        if char_id in character_cache:
+            # Mesmo que já exista, ainda precisamos vincular o anime ao personagem
+            insert_junction(cursor, 'animes_characters', anime_id=anime_id, related_id=char_id)
             continue
 
         # Busca os detalhes completos do personagem
-        char_full_data = fetch_json(f"{JIKAN_BASE_URL}/characters/{char_info.get('mal_id')}/full")
-
+        char_full_data = fetch_json(f"{JIKAN_BASE_URL}/characters/{char_id}/full")
         if char_full_data:
             insert_character(
                 cursor,
@@ -316,42 +323,49 @@ def process_anime(cursor, anime_id):
                 favorites=char_full_data.get('favorites'),
                 about=char_full_data.get('about')
             )
-            character_cache.add(char_full_data.get('mal_id'))
-        
-        insert_junction(cursor, 'animes_characters', anime_id=anime_id, related_id=char_info.get('mal_id'))
+            character_cache.add(char_id)
 
-        # Fotos extras do personagem
-        pictures = fetch_json(f"{JIKAN_BASE_URL}/characters/{char_info.get('mal_id')}/pictures")
-        if pictures:
-            for pic in pictures:
-                insert_character_picture(cursor, char_info.get('mal_id'), pic.get('jpg', {}).get('image_url'))
+            # Vincula personagem ao anime
+            insert_junction(cursor, 'animes_characters', anime_id=anime_id, related_id=char_id)
 
-        # Voice Actors
-        for va_entry in entry.get('voice_actors', []):
-            language = va_entry.get('language')
-            
-            if language not in ['Japanese', 'English', 'Portuguese (BR)']:
-                continue
-            
-            va_info = va_entry.get('person')
-            if not va_info or va_info.get('mal_id') in voice_actor_cache:
-                continue
+            # Fotos extras do personagem
+            pictures = fetch_json(f"{JIKAN_BASE_URL}/characters/{char_id}/pictures")
+            if pictures:
+                for pic in pictures:
+                    insert_character_picture(cursor, char_id, pic.get('jpg', {}).get('image_url'))
 
-            # Busca os detalhes completos do dublador
-            va_full_data = fetch_json(f"{JIKAN_BASE_URL}/people/{va_info.get('mal_id')}/full")
-            if va_full_data:
-                insert_voice_actor(
-                    cursor,
-                    va_full_data.get('mal_id'),
-                    va_full_data.get('name'),
-                    image_url=va_full_data.get('images', {}).get('jpg', {}).get('image_url'),
-                    birthday=va_full_data.get('birthday'),
-                    about=va_full_data.get('about'),
-                    language=language
-                )
-                voice_actor_cache.add(va_full_data.get('mal_id'))
-            
-            insert_junction(cursor, 'characters_voice_actors', character_id=char_info.get('mal_id'), related_id=va_info.get('mal_id'))
+            # Voice Actors: apenas JP, EN e PT-BR
+            for va_entry in entry.get('voice_actors', []):
+                language = va_entry.get('language')
+                if language not in ['Japanese', 'English', 'Portuguese (BR)']:
+                    continue
+
+                va_info = va_entry.get('person')
+                if not va_info:
+                    continue
+
+                va_id = va_info.get('mal_id')
+                if va_id in voice_actor_cache:
+                    # Vincula dublador ao personagem mesmo que já exista
+                    insert_junction(cursor, 'characters_voice_actors', character_id=char_id, related_id=va_id)
+                    continue
+
+                # Busca os detalhes completos do dublador
+                va_full_data = fetch_json(f"{JIKAN_BASE_URL}/people/{va_id}/full")
+                if va_full_data:
+                    insert_voice_actor(
+                        cursor,
+                        va_full_data.get('mal_id'),
+                        va_full_data.get('name'),
+                        image_url=va_full_data.get('images', {}).get('jpg', {}).get('image_url'),
+                        birthday=va_full_data.get('birthday'),
+                        about=va_full_data.get('about'),
+                        language=language
+                    )
+                    voice_actor_cache.add(va_id)
+
+                # Cria a relação personagem - dublador
+                insert_junction(cursor, 'characters_voice_actors', character_id=char_id, related_id=va_id)
 
 # -----------------
 # Main

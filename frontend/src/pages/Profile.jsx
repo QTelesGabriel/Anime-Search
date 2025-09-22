@@ -3,8 +3,20 @@ import { Link } from 'react-router-dom';
 import Header from '../components/Header';
 import SearchBar from '../components/SearchBar';
 import AnimeCarousel from '../components/AnimeCarousel';
+import LimitInput from '../components/LimitInput';
 import '../styles/categorie.css';
 import { useAuth } from '../context/AuthProvider';
+
+// Função auxiliar para carregar o valor do localStorage
+const loadLimit = (key, defaultValue) => {
+    try {
+        const storedValue = localStorage.getItem(key);
+        return storedValue ? parseInt(storedValue, 10) : defaultValue;
+    } catch (error) {
+        console.error("Erro ao carregar do localStorage:", error);
+        return defaultValue;
+    }
+};
 
 const Profile = () => {
     const { userId } = useAuth();
@@ -14,8 +26,14 @@ const Profile = () => {
     const [recommendedAnimes, setRecommendedAnimes] = useState([]);
     const [loadingMyList, setLoadingMyList] = useState(true);
     const [loadingRecommendations, setLoadingRecommendations] = useState(true);
+    const [recommendationsLimit, setRecommendationsLimit] = useState(() => loadLimit('recommendationsLimit', 20));
 
-    // useEffect para buscar a lista do usuário
+    // NOVO: Efeito para salvar o limite no localStorage
+    useEffect(() => {
+        localStorage.setItem('recommendationsLimit', recommendationsLimit.toString());
+    }, [recommendationsLimit]);
+
+    // useEffect para buscar a lista do usuário (não precisa de limite)
     useEffect(() => {
         const fetchMyAnimes = async () => {
             if (userId) {
@@ -50,7 +68,7 @@ const Profile = () => {
             if (userId) {
                 setLoadingRecommendations(true);
                 try {
-                    const response = await fetch(`${API_BASE_URL}/recommendations/${userId}`);
+                    const response = await fetch(`${API_BASE_URL}/recommendations/${userId}?limit=${recommendationsLimit}`);
                     if (response.ok) {
                         const data = await response.json();
                         if (Array.isArray(data)) {
@@ -76,31 +94,34 @@ const Profile = () => {
         };
 
         fetchRecommendations();
-    }, [userId]);
+    }, [userId, recommendationsLimit]);
 
     return (
         <>
             <Header />
-            <SearchBar />
             <div className="categorie">
                 <h2 className="title">Your List</h2>
                 <div className="options">
-                    <Link to='/' className="option">Add Anime to List</Link>
                     <Link to='/' className="option">Filter Anime List</Link>
                 </div>
             </div>
             {loadingMyList ? (
-                <p className='loading'>Carregando sua lista...</p>
+                <h3 className='loading'>Carregando sua lista...</h3>
             ) : (
                 <AnimeCarousel animes={myAnimes} />
             )}
             
             <div className="categorie">
                 <h2 className="title">Recommended For You</h2>
-                <Link to='/' className="option">Filter Recommendations</Link>
+                <LimitInput 
+                    label="Show" 
+                    value={recommendationsLimit}
+                    onChange={setRecommendationsLimit} 
+                    className="profile-limit-input"
+                />
             </div>
             {loadingRecommendations ? (
-                <p className='loading'>Carregando recomendações...</p>
+                <h3 className='loading'>Carregando recomendações...</h3>
             ) : (
                 <AnimeCarousel animes={recommendedAnimes} />
             )}

@@ -116,7 +116,7 @@ def create_tables():
                 PRIMARY KEY (anime_mal_id, service_id)
             );
             
-            CREATE TABLE IF NOT EXISTS login (
+            CREATE TABLE IF NOT EXISTS users (
                 user_id SERIAL PRIMARY KEY,
                 username VARCHAR(255) UNIQUE NOT NULL,
                 hashed_password VARCHAR(255) NOT NULL
@@ -127,6 +127,15 @@ def create_tables():
                 anime_id INT,
                 rating INT,
                 PRIMARY KEY (user_id, anime_id)
+            );
+
+            CREATE TABLE IF NOT EXISTS anime_user (
+                user_id INT NOT NULL,
+                anime_id INT NOT NULL,
+                status VARCHAR(50), -- ex: 'Assistindo', 'Assistidos', 'Assistirá'
+                PRIMARY KEY (user_id, anime_id),
+                FOREIGN KEY (user_id) REFERENCES users (user_id),
+                FOREIGN KEY (anime_id) REFERENCES animes (mal_id)
             );
         """
         
