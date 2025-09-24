@@ -17,3 +17,48 @@
     cursor: pointer;
 }
 
+/* === Tablets e telas médias (até 1024px) === */
+@media (max-width: 1024px) {
+  .anime-synopsis {
+    width: 90%;            /* usar largura fluida */
+  }
+
+  .synopsis {
+    font-size: 18px;       /* reduz um pouco o texto */
+  }
+
+  .read-more {
+    font-size: 22px;
+  }
+}
+
+/* === Celulares médios (até 768px) === */
+@media (max-width: 768px) {
+  .anime-synopsis {
+    width: 95%;            /* ocupa quase toda a tela */
+    text-align: center;
+  }
+
+  .synopsis {
+    font-size: 16px;
+    line-height: 1.5;      /* melhora a leitura */
+  }
+
+  .read-more {
+    display: block;
+    margin-top: 10px;
+    font-size: 20px;
+  }
+}
+
+/* === Celulares pequenos (até 480px) === */
+@media (max-width: 480px) {
+  .synopsis {
+    font-size: 14px;       /* texto menor para caber bem */
+  }
+
+  .read-more {
+    font-size: 18px;
+  }
+}
+

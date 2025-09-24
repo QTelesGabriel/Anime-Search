@@ -151,3 +151,249 @@
     scrollbar-width: thin;
     scrollbar-color: #555 #1D1D1D;
 }
+
+.anime-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); /* igual voice-actors-grid */
+    gap: 1rem; /* mesmo espaçamento */
+}
+
+.anime-card {
+    width: 150px; /* igual voice-card */
+    height: 250px; /* igual voice-card */
+    background-color: #1D1D1D; /* mesmo background */
+    padding: 0;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 0 5px rgba(0,0,0,0.3);
+}
+
+.anime-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+.anime-img-grid {
+    width: 100%;
+    height: 180px; /* igual voice-img */
+    object-fit: cover;
+    border-radius: 0.5rem 0.5rem 0 0;
+}
+
+.anime-card-footer {
+    height: 70px; /* igual voice-card-footer */
+    background-color: #2e2e2e;
+    padding: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    color: #fff;
+}
+
+.anime-title-grid {
+    font-size: 14px; /* igual voice-name/voice-language */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    width: 100%;
+}
+
+/* === Tablets e telas médias (≤1024px) === */
+@media (max-width: 1024px) {
+  .character-container {
+    width: 90%;
+    padding: 20px;
+    margin: 20px auto;
+  }
+
+  .character-title {
+    font-size: 28px;
+    margin-bottom: 16px;
+  }
+
+  .character-details {
+    gap: 1.5rem;
+    flex-wrap: wrap;
+  }
+
+  .character-img {
+    width: 200px;
+    height: auto;
+  }
+
+  .character-info h2 {
+    font-size: 24px;
+  }
+
+  .character-info strong {
+    font-size: 18px;
+  }
+
+  .voice-title {
+    font-size: 24px;
+    margin-top: 20px;
+    margin-bottom: 12px;
+  }
+
+  .voice-card {
+    width: 130px;
+    height: 220px;
+  }
+
+  .voice-img {
+    height: 150px;
+  }
+
+  .voice-card-footer {
+    height: 60px;
+  }
+
+  .anime-grid {
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 0.8rem;
+    margin-top: 16px;
+  }
+
+  .anime-img-grid {
+    height: 180px;
+  }
+}
+
+/* === Celulares médios (≤768px) === */
+@media (max-width: 768px) {
+  .character-container {
+    width: 90%;
+    padding: 16px;
+    margin: 16px auto;
+  }
+
+  .character-title {
+    font-size: 24px;
+    margin-bottom: 12px;
+  }
+
+  .character-details {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .character-img {
+    width: 100%;
+    height: auto;
+  }
+
+  .character-info h2 {
+    font-size: 20px;
+  }
+
+  .character-info strong {
+    font-size: 16px;
+  }
+
+  .voice-title {
+    font-size: 20px;
+    margin-top: 16px;
+    margin-bottom: 10px;
+  }
+
+  .voice-card {
+    width: 100%;
+    height: auto;
+  }
+
+  .voice-img {
+    height: 140px;
+  }
+
+  .voice-card-footer {
+    height: 50px;
+  }
+
+  .anime-grid {
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 0.6rem;
+    margin-top: 12px;
+  }
+
+  .anime-img-grid {
+    height: 140px;
+  }
+
+  .anime-title-grid {
+    font-size: 0.8rem;
+  } 
+}
+
+/* === Celulares pequenos (≤480px) === */
+@media (max-width: 480px) {
+  .character-container {
+    width: 90%;
+    padding: 12px;
+    margin: 12px auto;
+  }
+
+  .character-title {
+    font-size: 20px;
+    margin-bottom: 8px;
+  }
+
+  .character-details {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .character-pic {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease-in-out;
+  }   
+
+  .character-info h2 {
+    font-size: 18px;
+  }
+
+  .character-info strong {
+    font-size: 14px;
+  }
+
+  .voice-title {
+    font-size: 18px;
+    margin-top: 12px;
+    margin-bottom: 8px;
+  }
+
+  .voice-card {
+    width: 100%;
+    height: auto;
+  }
+
+  .voice-img {
+    height: 150px;
+  }
+
+  .voice-card-footer {
+    height: 60px;
+  }
+
+  .anime-grid {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 0.5rem;
+    margin-top: 10px;
+  }
+
+  .anime-img-grid {
+    height: 120px;
+  }
+
+  .anime-title-grid {
+    font-size: 0.75rem;
+  }
+}

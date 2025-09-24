@@ -25,3 +25,57 @@
 .register-bar__input::placeholder {
   color: #575757;
 }
+
+/* === Tablets e telas médias (≤1024px) === */
+@media (max-width: 1024px) {
+  .register {
+    width: 80%; /* ocupa parte da tela, mantendo distância das bordas */
+    margin-bottom: 1rem;
+  }
+
+  .register__title {
+    font-size: 18px;
+    margin-bottom: 8px;
+  }
+
+  .register-bar__input {
+    font-size: 18px;
+    padding: 0.4rem;
+  }
+}
+
+/* === Celulares médios (≤768px) === */
+@media (max-width: 768px) {
+  .register {
+    width: 90%; /* ocupa quase toda a tela */
+    margin: 0 auto 1rem auto; /* centralizado com margem inferior */
+  }
+
+  .register__title {
+    font-size: 16px;
+    margin-bottom: 6px;
+  }
+
+  .register-bar__input {
+    font-size: 16px;
+    padding: 0.4rem;
+  }
+}
+
+/* === Celulares pequenos (≤480px) === */
+@media (max-width: 480px) {
+  .register {
+    width: 95%;
+    margin: 0 auto 0.8rem auto;
+  }
+
+  .register__title {
+    font-size: 14px;
+    margin-bottom: 4px;
+  }
+
+  .register-bar__input {
+    font-size: 14px;
+    padding: 0.3rem;
+  }
+}

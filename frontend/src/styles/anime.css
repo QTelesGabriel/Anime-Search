@@ -99,3 +99,74 @@
     cursor: not-allowed;
     opacity: 0.6;
 }
+
+/* === Ajustes para tablets e celulares médios === */
+@media (max-width: 1024px) {
+  .anime-container,
+  .user-interaction-section {
+    width: 90%; /* ocupar a maior parte da tela */
+  }
+
+  .anime-info {
+    font-size: 36px; /* reduz fonte */
+    margin: 30px 0 20px 0;
+  }
+}
+
+/* === Ajustes para celulares pequenos === */
+@media (max-width: 600px) {
+  .anime-container,
+  .user-interaction-section {
+    width: 95%;
+    flex-direction: column; /* empilha elementos */
+    align-items: center;
+  }
+
+  .user-interaction-section {
+    gap: 15px; /* espaço entre botões */
+  }
+
+  .anime-info {
+    font-size: 28px; /* ainda menor para caber bem */
+    text-align: center;
+  }
+
+  .add-to-list-button {
+    width: 100%; /* botão ocupa toda a largura */
+    font-size: 16px;
+    padding: 12px 0;
+  }
+
+  .rating-section {
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .rating-section h3 {
+    font-size: 18px;
+    margin-bottom: 8px;
+    width: 100%;
+    text-align: center;
+  }
+
+  .rating-button {
+    width: 36px;
+    height: 36px;
+    font-size: 14px;
+  }
+}
+
+/* === Ajustes extras para telas muito pequenas (<=400px) === */
+@media (max-width: 400px) {
+  .anime-info {
+    font-size: 22px;
+  }
+  .add-to-list-button {
+    font-size: 14px;
+  }
+  .rating-button {
+    width: 32px;
+    height: 32px;
+    font-size: 12px;
+  }
+}

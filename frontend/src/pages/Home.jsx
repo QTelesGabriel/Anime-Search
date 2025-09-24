@@ -23,8 +23,8 @@ const Home = () => {
     const [bestAnimes, setBestAnimes] = useState([]);
     const [genreAnimes, setGenreAnimes] = useState([]);
     const [searchResults, setSearchResults] = useState([]);
-    const [search, setSearch] = useState('');
-    const [searchTerm, setSearchTerm] = useState('');
+    const [search, setSearch] = useState(() => localStorage.getItem('animeSearch') || '');
+    const [searchTerm, setSearchTerm] = useState(() => localStorage.getItem('animeSearch') || '');;
     const [genres, setGenres] = useState([]);
     const [selectedGenre, setSelectedGenre] = useState('');
 
@@ -36,23 +36,24 @@ const Home = () => {
     useEffect(() => { localStorage.setItem('genreAnimesLimit', genreAnimesLimit.toString()); }, [genreAnimesLimit]);
     useEffect(() => { localStorage.setItem('searchResultsLimit', searchResultsLimit.toString()); }, [searchResultsLimit]);
 
+    
     useEffect(() => {
         const fetchInitialData = async () => {
             try {
                 const resTop = await fetch(`${API_BASE_URL}/animes/top?limit=${topAnimesLimit}`);
                 setBestAnimes(await resTop.json());
-
+                
                 const resGenres = await fetch(`${API_BASE_URL}/animes/genres`);
                 const jsonGenres = await resGenres.json();
                 setGenres(jsonGenres);
-
+                
                 const storedGenre = localStorage.getItem('selectedGenre');
                 if (storedGenre && jsonGenres.some(g => g.name === storedGenre)) {
                     setSelectedGenre(storedGenre);
                 } else if (jsonGenres.length > 0) {
                     setSelectedGenre(jsonGenres[0].name);
                 }
-
+                
                 // Carrega pesquisa salva
                 const savedSearch = localStorage.getItem('animeSearch');
                 if (savedSearch) {
@@ -60,15 +61,41 @@ const Home = () => {
                     setSearch(savedSearch);
                     handleSearch(savedSearch);
                 }
-
+                
             } catch (error) {
                 console.error('Erro ao buscar dados iniciais:', error);
             }
         };
         fetchInitialData();
     }, [topAnimesLimit]);
-
+    
     useEffect(() => { if (selectedGenre) localStorage.setItem('selectedGenre', selectedGenre); }, [selectedGenre]);
+    
+    useEffect(() => {
+        const fetchSearchResults = async () => {
+            const searchValue = searchTerm.trim();
+            if (searchValue) {
+                try {
+                    const res = await fetch(`${API_BASE_URL}/animes/search?q=${encodeURIComponent(searchValue)}&limit=${searchResultsLimit}`);
+                    if (!res.ok) {
+                        throw new Error(`HTTP error! status: ${res.status}`);
+                    }
+                    const json = await res.json();
+                    setSearchResults(json);
+                    localStorage.setItem('animeSearch', searchValue);
+                } catch (error) {
+                    console.error('Erro ao buscar animes:', error);
+                    setSearchResults([]); // Limpa os resultados em caso de erro
+                }
+            } else {
+                setSearchResults([]); // Limpa os resultados se o termo de busca estiver vazio
+                console.log("2")
+                localStorage.removeItem('animeSearch');
+            }
+        };
+
+        fetchSearchResults();
+    }, [searchTerm, searchResultsLimit]);
 
     useEffect(() => {
         if (!selectedGenre) return;
@@ -83,17 +110,19 @@ const Home = () => {
         fetchGenreAnimes();
     }, [selectedGenre, genreAnimesLimit]);
 
-    const handleSearch = async (term = null) => {
-        const searchValue = term !== null ? term : search.trim();
-        if (searchValue === '') {
+    const handleSearch = async (term) => {
+        const searchValue = term.trim();
+        if (!searchValue) {
             setSearchResults([]);
             setSearchTerm('');
+            console.log("1");
             localStorage.removeItem('animeSearch');
             return;
         }
-
         try {
+            console.log(encodeURIComponent(searchValue))
             const res = await fetch(`${API_BASE_URL}/animes/search?q=${encodeURIComponent(searchValue)}&limit=${searchResultsLimit}`);
+            console.log(res)
             const json = await res.json();
             setSearchResults(json);
             setSearchTerm(searchValue);
@@ -109,7 +138,7 @@ const Home = () => {
             <SearchBar
                 search={search}
                 setSearch={setSearch}
-                onSearch={() => handleSearch()}
+                onSearch={(term) => handleSearch(term)}
             />
 
             {searchResults.length > 0 ? (
@@ -118,24 +147,25 @@ const Home = () => {
                         <h2 className="title">Search Results for: '{searchTerm}'</h2>
                         <LimitInput label="Show" value={searchResultsLimit} onChange={setSearchResultsLimit} />
                     </div>
-                    <AnimeCarousel animes={searchResults} />
+                    <AnimeCarousel animes={searchResults} storageKey="carousel-search-results" />
 
                     <div className="title-container">
                         <h2 className="title">Best Ratings</h2>
                         <LimitInput label="Show" value={topAnimesLimit} onChange={setTopAnimesLimit} />
                     </div>
-                    <AnimeCarousel animes={bestAnimes} />
+                    <AnimeCarousel animes={bestAnimes} storageKey="carousel-best-animes" key="best-carousel" />
 
                     <GenreSelect
                         genres={genres}
                         selectedGenre={selectedGenre}
                         setSelectedGenre={setSelectedGenre}
                     />
+
                     <div className="title-container">
                         <h2 className="title">Top Animes in {selectedGenre}</h2>
                         <LimitInput label="Show" value={genreAnimesLimit} onChange={setGenreAnimesLimit} />
                     </div>
-                    <AnimeCarousel animes={genreAnimes} />
+                    <AnimeCarousel animes={genreAnimes} storageKey={`carousel-genre-${selectedGenre}`} key={`genre-carousel-${selectedGenre}`} />
                 </>
             ) : (
                 <>
@@ -143,18 +173,19 @@ const Home = () => {
                         <h2 className="title">Best Ratings</h2>
                         <LimitInput label="Show" value={topAnimesLimit} onChange={setTopAnimesLimit} />
                     </div>
-                    <AnimeCarousel animes={bestAnimes} />
+                    <AnimeCarousel animes={bestAnimes} storageKey="carousel-best-animes" key="best-carousel" />
 
                     <GenreSelect
                         genres={genres}
                         selectedGenre={selectedGenre}
                         setSelectedGenre={setSelectedGenre}
                     />
+
                     <div className="categorie">
                         <h2 className="title">Top Animes in {selectedGenre}</h2>
                         <LimitInput label="Show" value={genreAnimesLimit} onChange={setGenreAnimesLimit} />
                     </div>
-                    <AnimeCarousel animes={genreAnimes} />
+                    <AnimeCarousel animes={genreAnimes} storageKey={`carousel-genre-${selectedGenre}`} key={`genre-carousel-${selectedGenre}`} />
                 </>
             )}
         </>

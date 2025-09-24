@@ -31,3 +31,60 @@
     font-size: 16px;
     padding: 8px;
 }
+
+/* === Tablets e telas médias (≤1024px) === */
+@media (max-width: 1024px) {
+  .genre-select {
+    margin: 24px 24px 16px 24px; /* mantém distância mínima das bordas */
+  }
+
+  .genre-select__dropdown {
+    width: 250px;
+    font-size: 16px;
+    padding: 0 10px;
+  }
+
+  .genre-select__dropdown option {
+    font-size: 14px;
+    padding: 6px;
+  }
+}
+
+/* === Celulares médios (≤768px) === */
+@media (max-width: 768px) {
+  .genre-select {
+    margin: 20px 5vw 14px 5vw;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .genre-select__dropdown {
+    width: 200; /* ocupa toda a largura disponível */
+    font-size: 15px;
+    padding: 0 10px;
+  }
+
+  .genre-select__dropdown option {
+    font-size: 14px;
+    padding: 6px;
+  }
+}
+
+/* === Celulares pequenos (≤480px) === */
+@media (max-width: 480px) {
+  .genre-select {
+    margin: 16px 5vw 12px 5vw;
+  }
+
+  .genre-select__dropdown {
+    width: 100%;
+    font-size: 14px;
+    padding: 0 8px;
+  }
+
+  .genre-select__dropdown option {
+    font-size: 12px;
+    padding: 5px;
+  }
+}

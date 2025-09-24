@@ -65,3 +65,93 @@
     padding: 10px;
     font-size: 16px;
 }
+
+/* === Tablets e telas médias (até 1024px) === */
+@media (max-width: 1024px) {
+  .title {
+    font-size: 30px;
+    margin: 16px 20px 12px 20px;
+  }
+
+  .option {
+    font-size: 18px;
+    padding: 0 24px 0 12px;
+  }
+
+  .genre-select-container label,
+  .genre-select-container select,
+  .genre-select-container select option {
+    font-size: 14px;
+  }
+}
+
+/* === Celulares médios (≤768px) === */
+@media (max-width: 768px) {
+  .categorie {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px; /* menor gap entre elementos */
+    margin: 0 5vw; /* distância mínima das bordas */
+  }
+
+  .title {
+    font-size: 24px;
+    margin: 8px 0;
+    text-align: left;
+  }
+
+  .options {
+    flex-wrap: wrap;
+    gap: 6px; /* menor espaço entre opções */
+    justify-content: flex-start; /* evita muito espaçamento */
+  }
+
+  .option {
+    font-size: 14px;
+    padding: 0 8px 0 4px; /* reduz o padding lateral */
+  }
+
+  .genre-select-container {
+    width: 100%;
+    justify-content: flex-start;
+    gap: 6px;
+  }
+
+  .genre-select-container select {
+    width: 100%;
+  }
+
+  .genre-select-container label,
+  .genre-select-container select,
+  .genre-select-container select option {
+    font-size: 13px; /* reduz um pouco a fonte */
+  }
+}
+
+/* === Celulares pequenos (≤480px) === */
+@media (max-width: 480px) {
+  .categorie {
+    margin: 0 5vw;
+    gap: 6px;
+  }
+
+  .title {
+    font-size: 20px;
+    margin: 6px 0;
+  }
+
+  .options {
+    gap: 4px;
+  }
+
+  .option {
+    font-size: 12px;
+    padding: 0 6px 0 2px;
+  }
+
+  .genre-select-container label,
+  .genre-select-container select,
+  .genre-select-container select option {
+    font-size: 12px;
+  }
+}

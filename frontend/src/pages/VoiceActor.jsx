@@ -59,9 +59,15 @@ const VoiceActor = () => {
 
                     <div className="voice-actor-info">
                         <h2>Voice Actor Details</h2>
-                        <p><strong>Birthday:</strong> {formatDate(voiceActor.birthday)}</p>
-                        <p><strong>About:</strong></p>
-                        <div className="about-content" dangerouslySetInnerHTML={{ __html: voiceActor.about?.replace(/\\n/g, '<br/>') || 'N/A' }}></div>
+                        {voiceActor.birthday && (
+                            <p><strong>Birthday:</strong> {formatDate(voiceActor.birthday)}</p>
+                        )}
+                        {voiceActor.about && (
+                            <>
+                                <p><strong>About:</strong></p>
+                                <div className="about-content" dangerouslySetInnerHTML={{ __html: voiceActor.about?.replace(/\\n/g, '<br/>') || 'N/A' }}></div>
+                            </>
+                        )}
                     </div>
                 </div>
 

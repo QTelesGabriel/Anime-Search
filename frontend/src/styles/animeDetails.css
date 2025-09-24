@@ -56,3 +56,83 @@
 .anime-details a:hover {
     text-decoration: underline;
 }
+
+/* === Tablets e telas médias (até 1024px) === */
+@media (max-width: 1024px) {
+  .anime-details {
+    width: 90%;              /* usar largura fluida */
+    padding: 1rem;
+    gap: 1rem;
+  }
+
+  .anime-details__img {
+    width: 260px;            /* reduz a imagem */
+  }
+
+  .detail-title {
+    font-size: 28px;
+  }
+
+  .detail h3 {
+    min-width: 100px;
+  }
+}
+
+/* === Celulares médios (até 768px) === */
+@media (max-width: 768px) {
+  .anime-details {
+    flex-direction: column;  /* empilha imagem e texto */
+    align-items: center;
+    justify-content: center;
+    width: 95%;
+    text-align: center;
+  }
+
+  .anime-details__img {
+    width: 70%;              /* imagem ocupa grande parte, mas não a tela toda */
+    max-width: 300px;
+  }
+
+  .anime-details__details {
+    width: 100%;
+    margin-top: 1rem;
+    align-items: center;
+  }
+
+  .detail-title {
+    font-size: 24px;
+  }
+
+  .detail {
+    flex-direction: column;  /* empilha label e valor */
+    gap: 0.25rem;
+  }
+
+  .detail h3 {
+    min-width: unset;        /* remove largura mínima */
+    font-size: 18px;
+  }
+
+  .detail p {
+    font-size: 16px;
+  }
+}
+
+/* === Celulares pequenos (até 480px) === */
+@media (max-width: 480px) {
+  .anime-details__img {
+    width: 90%;
+  }
+
+  .detail-title {
+    font-size: 20px;
+  }
+
+  .detail h3 {
+    font-size: 16px;
+  }
+
+  .detail p {
+    font-size: 14px;
+  }
+}

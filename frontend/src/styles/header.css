@@ -110,3 +110,88 @@
     font-size: 22px;
     background-color: #FF6B6B;
 }
+
+/* === Ajustes para tablets (até 1024px) === */
+@media (max-width: 1024px) {
+  .header {
+    height: 80px;
+    padding: 0 20px;
+  }
+
+  .header__title {
+    font-size: 28px;
+  }
+
+  .signup,
+  .login,
+  .logout-button,
+  .home,
+  .profile {
+    font-size: 18px;
+    padding: 6px 20px;
+    margin: 0 12px;
+  }
+
+  .header-icon {
+    width: 28px;
+    height: 28px;
+  }
+}
+
+/* === Ajustes para celulares médios (até 768px) === */
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    height: auto;
+    padding: 10px 15px;
+    gap: 10px;
+  }
+
+  .header__title {
+    font-size: 24px;
+    text-align: center;
+  }
+
+  .header-brand {
+    flex-direction: row;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .signup,
+  .login,
+  .logout-button,
+  .home,
+  .profile {
+    font-size: 16px;
+    padding: 6px 14px;
+    margin: 4px 8px;
+  }
+}
+
+/* === Ajustes para celulares pequenos (até 480px) === */
+@media (max-width: 480px) {
+  .header {
+    gap: 12px;
+    padding: 10px;
+  }
+
+  .header__title {
+    font-size: 20px;
+  }
+
+  .header-icon {
+    width: 24px;
+    height: 24px;
+  }
+
+  .signup,
+  .login,
+  .logout-button,
+  .home,
+  .profile {
+    font-size: 14px;
+    padding: 5px 10px;
+    margin: 2px 4px;
+  }
+}

@@ -4,8 +4,8 @@ import Header from '../components/Header';
 import SearchBar from '../components/SearchBar';
 import AnimeCarousel from '../components/AnimeCarousel';
 import LimitInput from '../components/LimitInput';
-import '../styles/categorie.css';
 import { useAuth } from '../context/AuthProvider';
+import '../styles/categorie.css';
 
 // Função auxiliar para carregar o valor do localStorage
 const loadLimit = (key, defaultValue) => {
@@ -101,14 +101,11 @@ const Profile = () => {
             <Header />
             <div className="categorie">
                 <h2 className="title">Your List</h2>
-                <div className="options">
-                    <Link to='/' className="option">Filter Anime List</Link>
-                </div>
             </div>
             {loadingMyList ? (
                 <h3 className='loading'>Carregando sua lista...</h3>
             ) : (
-                <AnimeCarousel animes={myAnimes} />
+                <AnimeCarousel animes={myAnimes} storageKey={`carousel-my-list-${userId}`} />
             )}
             
             <div className="categorie">
@@ -123,7 +120,7 @@ const Profile = () => {
             {loadingRecommendations ? (
                 <h3 className='loading'>Carregando recomendações...</h3>
             ) : (
-                <AnimeCarousel animes={recommendedAnimes} />
+                <AnimeCarousel animes={recommendedAnimes} storageKey={`carousel-recommended-${userId}`} />
             )}
         </>
     );

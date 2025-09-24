@@ -1,36 +1,155 @@
+/* === Estilo base === */
 .search-bar {
-    margin: 32px 34px;
-    height: 50px;
-    display: flex;
-    align-items: center;
+  margin: 32px 34px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  position: relative;
 }
 
 .search-bar__input {
-    border-radius: 10px;
-    height: 42px;
-    width: 570px;
-    padding: 0 10px;
-    font-size: 20px;
-    background-image: url('../assets/searchIcon.png');
-    background-repeat: no-repeat;
-    background-size: 30px 30px;
-    background-position: calc(100% - 8px) center;
+  border-radius: 10px;
+  height: 42px;
+  width: 570px;
+  padding: 0 10px;
+  font-size: 20px;
+  background-image: url('../assets/searchIcon.png');
+  background-repeat: no-repeat;
+  background-size: 30px 30px;
+  background-position: calc(100% - 8px) center;
 }
 
 .search-bar__button {
-    font-size: 20px;
-    color: white;
-    text-decoration: none;
-    font-weight: bold;
-    margin: 0 20px;
-    padding: 8px 15px;
-    background-color: #FF8484;
-    border-radius: 20px;
-    transition: font-size 0.3s ease, text-decoration 0.3s ease;
+  font-size: 20px;
+  color: white;
+  text-decoration: none;
+  font-weight: bold;
+  margin: 0 20px;
+  padding: 8px 15px;
+  background-color: #FF8484;
+  border-radius: 20px;
+  transition: font-size 0.3s ease, text-decoration 0.3s ease;
 }
 
 .search-bar__button:hover {
-    font-size: 22px;
-    background-color: #FF6B6B;
-    cursor: pointer;
+  font-size: 22px;
+  background-color: #FF6B6B;
+  cursor: pointer;
+}
+
+/* === Lista de sugestões === */
+.autocomplete-list {
+  position: absolute;          /* sobrepõe outros elementos */
+  top: 60px;                   /* um pouco abaixo do input (ajuste conforme altura do search-bar) */
+  left: 0;
+  width: 100%;
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  z-index: 999;                /* garante que fique acima de outros elementos */
+  padding: 0;
+  margin: 0;
+  list-style: none;
+  max-width: 570px  ;
+  max-height: none;            /* sem limite de altura */
+  overflow: visible;           /* impede scroll */
+}
+
+/* === Cada item === */
+.autocomplete-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.autocomplete-item:hover {
+  background-color: #f5f5f5;
+}
+
+.autocomplete-item span {
+  color: #000;                 /* texto preto */
+  font-size: 16px;
+}
+
+/* === Imagem de miniatura === */
+.autocomplete-img {
+  width: 32px;
+  height: 45px;
+  object-fit: cover;
+  border-radius: 4px;
+  margin-right: 10px;
+}
+
+/* === Tablets e telas médias (até 1024px) === */
+@media (max-width: 1024px) {
+  .search-bar {
+    margin: 24px 20px;
+  }
+
+  .search-bar__input {
+    width: 400px;
+    font-size: 18px;
+    background-size: 26px 26px;
+  }
+
+  .search-bar__button {
+    font-size: 18px;
+    padding: 7px 12px;
+    margin: 0 12px;
+  }
+
+  .autocomplete-list {
+    width: 400px;
+  }
+}
+
+/* === Celulares médios (até 768px) === */
+@media (max-width: 768px) {
+  .search-bar {
+    flex-direction: column;
+    align-items: stretch;
+    height: auto;
+    margin: 20px 15px;
+    gap: 10px;
+  }
+
+  .search-bar__input {
+    width: 100%;
+    font-size: 16px;
+    background-size: 24px 24px;
+    background-position: calc(100% - 10px) center;
+  }
+
+  .search-bar__button {
+    width: 100%;
+    font-size: 16px;
+    padding: 10px;
+    margin: 0;
+    border-radius: 14px;
+  }
+
+  .autocomplete-list {
+    width: 100%;
+    top: 100%; /* Ajusta para aparecer logo abaixo */
+  }
+}
+
+/* === Celulares pequenos (até 480px) === */
+@media (max-width: 480px) {
+  .search-bar__input {
+    font-size: 14px;
+    background-size: 20px 20px;
+  }
+
+  .search-bar__button {
+    font-size: 14px;
+    padding: 8px;
+  }
+
+  .autocomplete-list {
+    max-height: none;
+  }
 }

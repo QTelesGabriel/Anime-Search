@@ -15,3 +15,36 @@
 
   border-radius: 8px;
 }
+
+/* === Tablets e telas médias (até 1024px) === */
+@media (max-width: 1024px) {
+  .anime-trailer {
+    width: 90%;             /* usar largura fluida */
+    padding: 20px 25px;
+  }
+}
+
+/* === Celulares médios (até 768px) === */
+@media (max-width: 768px) {
+  .anime-trailer {
+    width: 95%;             /* ocupa quase toda a tela */
+    padding: 15px;
+  }
+
+  .anime-trailer__iframe {
+    border-radius: 6px;
+  }
+}
+
+/* === Celulares pequenos (até 480px) === */
+@media (max-width: 480px) {
+  .anime-trailer {
+    width: 100%;            /* largura total */
+    padding: 10px;
+    border-radius: 8px;
+  }
+
+  .anime-trailer__iframe {
+    border-radius: 5px;
+  }
+}

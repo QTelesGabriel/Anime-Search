@@ -87,3 +87,74 @@
 .anime-carousel-viewport::-webkit-scrollbar { height: 8px; }
 .anime-carousel-viewport::-webkit-scrollbar-thumb { background: rgba(80,80,80,0.6); border-radius: 6px; }
 
+/* === Tablets e telas médias (até 1024px) === */
+@media (max-width: 1024px) {
+  .anime-carousel {
+    padding-left: 20px;
+    padding-right: 20px;
+    gap: 12px;
+  }
+
+  .anime-carousel-item {
+    width: 150px; /* cartões levemente menores */
+  }
+
+  .anime-carousel-track {
+    display: flex;
+    gap: 12px; /* mantenha GAP_PX consistente com o JS */
+    padding: 8px 20px; /* igual ao seu design antigo */
+    align-items: flex-start;
+  }
+
+  .carousel-arrow {
+    width: 36px;
+    height: 60px;
+  }
+}
+
+/* === Celulares médios (até 768px) === */
+@media (max-width: 768px) {
+  .anime-carousel {
+    padding-left: 15px;
+    padding-right: 15px;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .anime-carousel-track {
+    display: flex;
+    gap: 12px; /* mantenha GAP_PX consistente com o JS */
+    padding: 8px 34px; /* igual ao seu design antigo */
+    align-items: flex-start;
+  }
+
+  .anime-carousel-item {
+    max-width: 120px; /* reduz ainda mais o tamanho */
+  }
+
+  .carousel-arrow {
+    display: none; /* remove setas para usar swipe */
+  }
+
+  .loading {
+    margin: 0 0 0 15px;
+  }
+}
+
+/* === Celulares pequenos (até 480px) === */
+@media (max-width: 480px) {
+  .anime-carousel {
+    padding-left: 10px;
+    padding-right: 10px;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .anime-carousel-track {
+    padding: 0 15px 0 15px;;
+  }
+
+  .anime-carousel-item {
+    max-width: 100px;
+  }
+}

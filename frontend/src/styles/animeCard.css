@@ -32,3 +32,55 @@
     text-align: center;
     color: #FFFFFF;
 }
+
+/* === Tablets e telas médias (até 1024px) === */
+@media (max-width: 1024px) {
+  .anime-card {
+    width: 140px;
+    height: 230px;
+  }
+
+  .anime-card__image {
+    height: 175px;
+  }
+
+  .anime-card__title {
+    font-size: 0.95rem;
+    padding: 10px;
+  }
+}
+
+/* === Celulares médios (até 768px) === */
+@media (max-width: 768px) {
+  .anime-card {
+    max-width: 120px;
+    max-height: 200px;
+    margin: 4px 0;
+  }
+
+  .anime-card__image {
+    height: 150px;
+  }
+
+  .anime-card__title {
+    font-size: 0.9rem;
+    padding: 8px;
+  }
+}
+
+/* === Celulares pequenos (até 480px) === */
+@media (max-width: 480px) {
+  .anime-card {
+    max-width: 100px;
+    height: 170px;
+  }
+
+  .anime-card__image {
+    height: 130px;
+  }
+
+  .anime-card__title {
+    font-size: 0.8rem;
+    padding: 6px;
+  }
+}

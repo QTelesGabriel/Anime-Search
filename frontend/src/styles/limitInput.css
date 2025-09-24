@@ -85,3 +85,71 @@
   outline: none;
   border-color: #ff4747;
 }
+
+/* === Tablets e telas médias (≤1024px) === */
+@media (max-width: 1024px) {
+  .limit-input-container {
+    margin: 12px 5vw; /* mantém distância mínima das bordas */
+    gap: 6px;
+  }
+
+  .limit-label {
+    font-size: 0.9rem;
+    min-width: 45px;
+  }
+
+  .limit-input {
+    font-size: 0.9rem;
+    padding: 6px 32px 6px 10px;
+  }
+
+  .limit-buttons .limit-arrow {
+    font-size: 0.75rem;
+  }
+}
+
+/* === Celulares médios (≤768px) === */
+@media (max-width: 768px) {
+  .limit-input-container {
+    margin: 0 0 10px 0;
+    width: 100%;
+    gap: 3px;
+  }
+
+  .limit-label {
+    font-size: 0.8rem;
+    min-width: 40px;
+  }
+
+  .limit-input {
+    font-size: 0.8rem;
+    padding: 15px 28px 15px 8px;
+  }
+
+  .limit-buttons .limit-arrow {
+    font-size: 1rem;
+  }
+}
+
+/* === Celulares pequenos (≤480px) === */
+@media (max-width: 480px) {
+  .limit-input-container {
+    margin: 0 0 10px 0;
+    width: 100%;
+    gap: 3px;
+  }
+
+  .limit-label {
+    font-size: 0.8rem;
+    min-width: 40px;
+  }
+
+  .limit-input {
+    font-size: 0.8rem;
+    padding: 15px 28px 15px 8px;
+  }
+
+  .limit-buttons .limit-arrow {
+    font-size: 1rem;
+  }
+}

@@ -8,7 +8,7 @@ import '../styles/animeCarousel.css';
  * - Calcula quantos itens cabem por página e faz scroll por múltiplos de itemWidth
  * - Mostra/oculta as setas conforme necessário e desabilita quando no início/fim
  */
-const AnimeCarousel = ({ animes }) => {
+const AnimeCarousel = ({ animes }) => { // Removi a prop 'storageKey'
   const viewportRef = useRef(null);
   const trackRef = useRef(null);
 
@@ -26,14 +26,10 @@ const AnimeCarousel = ({ animes }) => {
     if (!vp || !track) return;
 
     const update = () => {
-      // overflow
       setIsOverflowing(track.scrollWidth > vp.clientWidth + 1);
-
-      // prev/next
       setCanScrollPrev(vp.scrollLeft > 0);
       setCanScrollNext(vp.scrollLeft + vp.clientWidth < track.scrollWidth - 1);
 
-      // calcula quantos itens por página e a largura do "page scroll"
       const firstItem = track.children[0];
       const itemWidth = firstItem ? Math.round(firstItem.getBoundingClientRect().width) : 180;
       const fullItem = itemWidth + GAP_PX;
@@ -44,19 +40,23 @@ const AnimeCarousel = ({ animes }) => {
     update();
 
     const onResize = () => update();
+    const onScroll = () => {
+      update();
+    };
+
     window.addEventListener('resize', onResize);
-    vp.addEventListener('scroll', update);
+    vp.addEventListener('scroll', onScroll);
 
     return () => {
       window.removeEventListener('resize', onResize);
-      vp.removeEventListener('scroll', update);
+      vp.removeEventListener('scroll', onScroll);
     };
-  }, [animes]);
+  }, [animes]); // Removi 'storageKey' da dependência
 
   const scrollByPage = (dir = 1) => {
     const vp = viewportRef.current;
     if (!vp) return;
-    const amount = pageScrollWidth || vp.clientWidth; // fallback
+    const amount = pageScrollWidth || vp.clientWidth;
     vp.scrollBy({ left: dir * amount, behavior: 'smooth' });
   };
 

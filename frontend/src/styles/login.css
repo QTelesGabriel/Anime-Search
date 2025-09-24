@@ -59,3 +59,72 @@
 .link-signup:hover {
   text-decoration: underline;
 }
+
+/* === Tablets e telas médias (≤1024px) === */
+@media (max-width: 1024px) {
+  .login-container {
+    width: 80%;
+    padding: 20px;
+  }
+
+  .login__title {
+    font-size: 30px;
+    margin-bottom: 1.2rem;
+  }
+
+  .login-button {
+    font-size: 18px;
+    padding: 10px 24px;
+  }
+
+  .link-signup {
+    font-size: 14px;
+    margin-bottom: 20px;
+  }
+}
+
+/* === Celulares médios (≤768px) === */
+@media (max-width: 768px) {
+  .login-container {
+    width: 90%;
+    padding: 16px;
+  }
+
+  .login__title {
+    font-size: 26px;
+    margin-bottom: 1rem;
+  }
+
+  .login-button {
+    font-size: 16px;
+    padding: 8px 20px;
+  }
+
+  .link-signup {
+    font-size: 12px;
+    margin-bottom: 16px;
+  }
+}
+
+/* === Celulares pequenos (≤480px) === */
+@media (max-width: 480px) {
+  .login-container {
+    width: 95%;
+    padding: 12px;
+  }
+
+  .login__title {
+    font-size: 22px;
+    margin-bottom: 0.8rem;
+  }
+
+  .login-button {
+    font-size: 14px;
+    padding: 6px 16px;
+  }
+
+  .link-signup {
+    font-size: 12px;
+    margin-bottom: 12px;
+  }
+}

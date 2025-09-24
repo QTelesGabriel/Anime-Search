@@ -246,11 +246,10 @@ def get_animes_by_genre(genre_name: str = Path(..., title="Nome do Gênero"), li
             conn.close()
 
 @app.get("/animes/search")
-def search_animes(q: str = Query(..., min_length=1), limit: int = 25): # NOVO
+def search_animes(q: str = Query(..., min_length=1), limit: int = 25):
     conn = get_db_connection()
     if not conn:
         raise HTTPException(status_code=500, detail="Erro de conexão com o banco de dados")
-
     try:
         cursor = conn.cursor(cursor_factory=DictCursor)
         search_query = f"%{q.lower()}%"
@@ -263,13 +262,29 @@ def search_animes(q: str = Query(..., min_length=1), limit: int = 25): # NOVO
         """, (search_query, limit))
         animes = cursor.fetchall()
         return [dict(row) for row in animes]
-    except psycopg2.Error as e:
-        raise HTTPException(status_code=500, detail=f"Erro no banco de dados: {e}")
     finally:
-        if 'cursor' in locals():
-            cursor.close()
-        if conn:
-            conn.close()
+        if 'cursor' in locals(): cursor.close()
+        if conn: conn.close()
+
+@app.get("/animes/autocomplete")
+def autocomplete_animes(q: str = Query(..., min_length=2)):
+    conn = get_db_connection()
+    if not conn:
+        raise HTTPException(status_code=500, detail="Erro de conexão com o banco de dados")
+    try:
+        cursor = conn.cursor(cursor_factory=DictCursor)
+        cursor.execute("""
+            SELECT mal_id, title, image_url
+            FROM animes
+            WHERE LOWER(title) LIKE LOWER(%s) AND score IS NOT NULL
+            ORDER BY score DESC, rank ASC
+            LIMIT 5;
+        """, (f"%{q}%",))
+        results = cursor.fetchall()
+        return [dict(row) for row in results]
+    finally:
+        if 'cursor' in locals(): cursor.close()
+        if conn: conn.close()
 
 @app.get("/recommendations/{user_id}")
 def get_recommendations_svd(user_id: int, limit: int = 20):
@@ -654,6 +669,37 @@ def get_voice_actor_details(mal_id: int):
     except (Exception, psycopg2.DatabaseError) as error:
         print(f"Erro na consulta SQL para o dublador ID {mal_id}: {error}")
         raise HTTPException(status_code=500, detail="Ocorreu um erro ao buscar os detalhes do dublador.")
+    finally:
+        if conn:
+            cur.close()
+            conn.close()
+
+@app.get("/character/{mal_id}/animes")
+def get_animes_by_character(mal_id: int):
+    """
+    Retorna todos os animes nos quais o personagem aparece.
+    """
+    conn = get_db_connection()
+    if not conn:
+        raise HTTPException(status_code=500, detail="Erro de conexão com o banco de dados")
+    
+    try:
+        cur = conn.cursor(cursor_factory=DictCursor)
+        
+        query = """
+            SELECT a.mal_id, a.title, a.image_url
+            FROM animes a
+            JOIN animes_characters ac ON a.mal_id = ac.anime_mal_id
+            WHERE ac.character_mal_id = %s;
+        """
+        cur.execute(query, (mal_id,))
+        animes = cur.fetchall()
+        
+        return [dict(row) for row in animes]
+    
+    except Exception as e:
+        print(f"Erro ao buscar animes do personagem {mal_id}: {e}")
+        raise HTTPException(status_code=500, detail="Erro ao buscar animes do personagem")
     finally:
         if conn:
             cur.close()
