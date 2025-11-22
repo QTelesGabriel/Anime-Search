@@ -5,7 +5,7 @@ import AnimeCarousel from '../components/AnimeCarousel';
 import GenreSelect from '../components/GenreSelect';
 import LimitInput from '../components/LimitInput';
 import '../styles/categorie.css';
-import '../styles/LimitInput.css';
+import '../styles/limitInput.css';
 
 const loadLimit = (key, defaultValue) => {
     try {
@@ -23,20 +23,25 @@ const Home = () => {
     const [bestAnimes, setBestAnimes] = useState([]);
     const [genreAnimes, setGenreAnimes] = useState([]);
     const [searchResults, setSearchResults] = useState([]);
+    
+    // Estado inicial da busca
     const [search, setSearch] = useState(() => localStorage.getItem('animeSearch') || '');
-    const [searchTerm, setSearchTerm] = useState(() => localStorage.getItem('animeSearch') || '');;
+    const [searchTerm, setSearchTerm] = useState(() => localStorage.getItem('animeSearch') || '');
+    
     const [genres, setGenres] = useState([]);
     const [selectedGenre, setSelectedGenre] = useState('');
 
+    // Limites
     const [topAnimesLimit, setTopAnimesLimit] = useState(() => loadLimit('topAnimesLimit', 20));
     const [genreAnimesLimit, setGenreAnimesLimit] = useState(() => loadLimit('genreAnimesLimit', 20));
     const [searchResultsLimit, setSearchResultsLimit] = useState(() => loadLimit('searchResultsLimit', 25));
 
+    // Persistência dos limites
     useEffect(() => { localStorage.setItem('topAnimesLimit', topAnimesLimit.toString()); }, [topAnimesLimit]);
     useEffect(() => { localStorage.setItem('genreAnimesLimit', genreAnimesLimit.toString()); }, [genreAnimesLimit]);
     useEffect(() => { localStorage.setItem('searchResultsLimit', searchResultsLimit.toString()); }, [searchResultsLimit]);
 
-    
+    // Carregamento inicial (Top Animes + Generos + Busca Salva)
     useEffect(() => {
         const fetchInitialData = async () => {
             try {
@@ -54,12 +59,12 @@ const Home = () => {
                     setSelectedGenre(jsonGenres[0].name);
                 }
                 
-                // Carrega pesquisa salva
                 const savedSearch = localStorage.getItem('animeSearch');
                 if (savedSearch) {
                     setSearchTerm(savedSearch);
                     setSearch(savedSearch);
-                    handleSearch(savedSearch);
+                    // Não chamamos handleSearch aqui para evitar loop ou dupla chamada, 
+                    // o useEffect de [searchTerm] cuidará disso se necessário ou chamada direta.
                 }
                 
             } catch (error) {
@@ -67,36 +72,39 @@ const Home = () => {
             }
         };
         fetchInitialData();
-    }, [topAnimesLimit]);
+    }, [topAnimesLimit]); // Dependência apenas do limite para recarregar se ele mudar
     
+    // Persistência do gênero
     useEffect(() => { if (selectedGenre) localStorage.setItem('selectedGenre', selectedGenre); }, [selectedGenre]);
     
+    // Executa a busca quando searchTerm ou limite mudam
     useEffect(() => {
         const fetchSearchResults = async () => {
             const searchValue = searchTerm.trim();
             if (searchValue) {
                 try {
                     const res = await fetch(`${API_BASE_URL}/animes/search?q=${encodeURIComponent(searchValue)}&limit=${searchResultsLimit}`);
-                    if (!res.ok) {
-                        throw new Error(`HTTP error! status: ${res.status}`);
-                    }
+                    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+                    
                     const json = await res.json();
                     setSearchResults(json);
                     localStorage.setItem('animeSearch', searchValue);
                 } catch (error) {
                     console.error('Erro ao buscar animes:', error);
-                    setSearchResults([]); // Limpa os resultados em caso de erro
+                    setSearchResults([]);
                 }
             } else {
-                setSearchResults([]); // Limpa os resultados se o termo de busca estiver vazio
-                console.log("2")
+                setSearchResults([]);
                 localStorage.removeItem('animeSearch');
             }
         };
 
-        fetchSearchResults();
+        // Só busca se houver termo (evita buscar vazio na montagem se não tiver nada salvo)
+        if (searchTerm) fetchSearchResults();
+
     }, [searchTerm, searchResultsLimit]);
 
+    // Busca por Gênero
     useEffect(() => {
         if (!selectedGenre) return;
         const fetchGenreAnimes = async () => {
@@ -110,25 +118,12 @@ const Home = () => {
         fetchGenreAnimes();
     }, [selectedGenre, genreAnimesLimit]);
 
-    const handleSearch = async (term) => {
+    const handleSearch = (term) => {
         const searchValue = term.trim();
+        setSearchTerm(searchValue); // Isso disparará o useEffect da busca
         if (!searchValue) {
             setSearchResults([]);
-            setSearchTerm('');
-            console.log("1");
             localStorage.removeItem('animeSearch');
-            return;
-        }
-        try {
-            console.log(encodeURIComponent(searchValue))
-            const res = await fetch(`${API_BASE_URL}/animes/search?q=${encodeURIComponent(searchValue)}&limit=${searchResultsLimit}`);
-            console.log(res)
-            const json = await res.json();
-            setSearchResults(json);
-            setSearchTerm(searchValue);
-            localStorage.setItem('animeSearch', searchValue);
-        } catch (error) {
-            console.error('Erro ao buscar animes:', error);
         }
     };
 
@@ -138,7 +133,7 @@ const Home = () => {
             <SearchBar
                 search={search}
                 setSearch={setSearch}
-                onSearch={(term) => handleSearch(term)}
+                onSearch={handleSearch}
             />
 
             {searchResults.length > 0 ? (
@@ -147,13 +142,19 @@ const Home = () => {
                         <h2 className="title">Search Results for: '{searchTerm}'</h2>
                         <LimitInput label="Show" value={searchResultsLimit} onChange={setSearchResultsLimit} />
                     </div>
-                    <AnimeCarousel animes={searchResults} storageKey="carousel-search-results" />
+                    <AnimeCarousel 
+                        animes={searchResults} 
+                        storageKey="carousel-search-results" 
+                    />
 
                     <div className="title-container">
                         <h2 className="title">Best Ratings</h2>
                         <LimitInput label="Show" value={topAnimesLimit} onChange={setTopAnimesLimit} />
                     </div>
-                    <AnimeCarousel animes={bestAnimes} storageKey="carousel-best-animes" key="best-carousel" />
+                    <AnimeCarousel 
+                        animes={bestAnimes} 
+                        storageKey="carousel-best-animes" 
+                    />
 
                     <GenreSelect
                         genres={genres}
@@ -165,7 +166,10 @@ const Home = () => {
                         <h2 className="title">Top Animes in {selectedGenre}</h2>
                         <LimitInput label="Show" value={genreAnimesLimit} onChange={setGenreAnimesLimit} />
                     </div>
-                    <AnimeCarousel animes={genreAnimes} storageKey={`carousel-genre-${selectedGenre}`} key={`genre-carousel-${selectedGenre}`} />
+                    <AnimeCarousel 
+                        animes={genreAnimes} 
+                        storageKey={`carousel-genre-${selectedGenre}`} 
+                    />
                 </>
             ) : (
                 <>
@@ -173,7 +177,10 @@ const Home = () => {
                         <h2 className="title">Best Ratings</h2>
                         <LimitInput label="Show" value={topAnimesLimit} onChange={setTopAnimesLimit} />
                     </div>
-                    <AnimeCarousel animes={bestAnimes} storageKey="carousel-best-animes" key="best-carousel" />
+                    <AnimeCarousel 
+                        animes={bestAnimes} 
+                        storageKey="carousel-best-animes" 
+                    />
 
                     <GenreSelect
                         genres={genres}
@@ -185,7 +192,10 @@ const Home = () => {
                         <h2 className="title">Top Animes in {selectedGenre}</h2>
                         <LimitInput label="Show" value={genreAnimesLimit} onChange={setGenreAnimesLimit} />
                     </div>
-                    <AnimeCarousel animes={genreAnimes} storageKey={`carousel-genre-${selectedGenre}`} key={`genre-carousel-${selectedGenre}`} />
+                    <AnimeCarousel 
+                        animes={genreAnimes} 
+                        storageKey={`carousel-genre-${selectedGenre}`} 
+                    />
                 </>
             )}
         </>

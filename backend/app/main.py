@@ -57,6 +57,113 @@ def get_db_connection():
 # Variável para armazenar o modelo SVD carregado
 svd_model = None
 
+import random # Importe isso no topo do arquivo se quiser misturar a ordem final
+
+def get_fallback_recommendations(conn, user_id, limit):
+    """
+    Estratégia de Fallback Híbrida e Ponderada:
+    1. Analisa os Top 3 gêneros favoritos do usuário.
+    2. Calcula quantos animes de cada gênero devem ser mostrados (proporcionalmente).
+    3. Busca os melhores de cada gênero.
+    4. Se sobrar espaço (ou usuário novo), preenche com Top Global.
+    """
+    cur = conn.cursor(cursor_factory=DictCursor)
+    
+    # 1. O que o usuário JÁ VIU (para não recomendar repetido)
+    cur.execute("SELECT anime_id FROM ratings WHERE user_id = %s", (user_id,))
+    seen_ids = {row['anime_id'] for row in cur.fetchall()} 
+    
+    recommendations = []
+    
+    # 2. Busca os Top 3 Gêneros (com notas >= 7) e suas contagens
+    cur.execute("""
+        SELECT g.name, COUNT(*) as count
+        FROM ratings r
+        JOIN animes_genres ag ON r.anime_id = ag.anime_mal_id
+        JOIN genres g ON ag.genre_mal_id = g.mal_id
+        WHERE r.user_id = %s AND r.rating >= 7
+        GROUP BY g.name
+        ORDER BY count DESC
+        LIMIT 3;
+    """, (user_id,))
+    
+    top_genres = [dict(row) for row in cur.fetchall()]
+    
+    # Se houver gêneros favoritos, calculamos a proporção
+    if top_genres:
+        total_likes = sum(g['count'] for g in top_genres)
+        
+        print(f"Fallback Ponderado para User {user_id}: Gêneros {top_genres}")
+        
+        for genre in top_genres:
+            # Regra de 3: (Likes do Gênero / Total de Likes) * Limite Total
+            # Ex: (10 / 20) * 20 = 10 animes
+            slots = int((genre['count'] / total_likes) * limit)
+            
+            if slots < 1: 
+                continue
+                
+            # Busca os melhores desse gênero específico
+            cur.execute("""
+                SELECT a.mal_id, a.title, a.image_url, a.score
+                FROM animes a
+                JOIN animes_genres ag ON a.mal_id = ag.anime_mal_id
+                JOIN genres g ON ag.genre_mal_id = g.mal_id
+                WHERE g.name = %s
+                AND a.score IS NOT NULL
+                ORDER BY a.score DESC
+                LIMIT %s;
+            """, (genre['name'], slots + 10)) # Busca sobra para garantir filtro
+            
+            candidates = cur.fetchall()
+            
+            count_added = 0
+            for anime in candidates:
+                if anime['mal_id'] not in seen_ids:
+                    recommendations.append(dict(anime))
+                    seen_ids.add(anime['mal_id']) # Marca como visto para não duplicar em outro gênero
+                    count_added += 1
+                    if count_added >= slots:
+                        break
+    
+    # 3. Preenchimento (Backfill) com TOP GLOBAL
+    # Isso roda se:
+    # a) O usuário é novo (top_genres vazio)
+    # b) A soma proporcional não encheu o limite (arredondamentos)
+    # c) Acabaram os animes bons dos gêneros escolhidos
+    if len(recommendations) < limit:
+        remaining_slots = limit - len(recommendations)
+        print(f"Fallback: Preenchendo {remaining_slots} slots com Top Global.")
+        
+        cur.execute("""
+            SELECT mal_id, title, image_url, score 
+            FROM animes 
+            WHERE score IS NOT NULL
+            ORDER BY score DESC 
+            LIMIT %s;
+        """, (remaining_slots + 50,)) # Margem de segurança
+        
+        global_candidates = cur.fetchall()
+        
+        for anime in global_candidates:
+            if anime['mal_id'] not in seen_ids:
+                recommendations.append(dict(anime))
+                seen_ids.add(anime['mal_id'])
+                if len(recommendations) >= limit:
+                    break
+
+    # 4. Tratamento Final
+    # Adiciona campo predicted_rating se não existir (usando score)
+    for rec in recommendations:
+        if 'predicted_rating' not in rec:
+            rec['predicted_rating'] = rec['score'] if rec['score'] else 0
+
+    # Opcional: Ordenar tudo por Score para que os melhores (independente do gênero) fiquem no topo
+    # Ou Shuffle se quiser misturar aleatoriamente
+    recommendations.sort(key=lambda x: x['predicted_rating'] or 0, reverse=True)
+
+    return recommendations[:limit]
+
 @app.on_event("startup")
 def load_svd_model():
     """Carrega o modelo SVD ao iniciar o servidor."""
@@ -293,41 +400,77 @@ def get_recommendations_svd(user_id: int, limit: int = 20):
         raise HTTPException(status_code=500, detail="Erro de conexão com o banco de dados")
 
     try:
+        # Verifica se o modelo existe
+        if svd_model is None:
+            return get_fallback_recommendations(conn, user_id, limit)
+
+        # Verifica se o modelo CONHECE este usuário (estava no treino de ontem?)
+        # O surprise converte IDs para strings internamente em alguns casos, 
+        # mas o método knows_user espera o "Raw ID" (o ID do seu banco)
+        try:
+            # Tenta verificar se o usuário existe no treino interno do SVD
+            # Nota: Nem sempre o objeto trainset é salvo com o dump. 
+            # Se der erro, assumimos que o usuário é desconhecido ou o modelo não suporta essa verificação.
+            if not svd_model.trainset.knows_user(str(user_id)) and not svd_model.trainset.knows_user(user_id):
+                print(f"Usuário {user_id} não conhecido pelo modelo SVD (novo). Usando Fallback.")
+                return get_fallback_recommendations(conn, user_id, limit)
+        except AttributeError:
+            # Se o modelo foi salvo sem o trainset, seguimos tentando prever.
+            # O SVD padrão retorna a média global se não conhecer o usuário,
+            # mas nós preferimos recomendação por gênero, então vamos forçar o fallback
+            # se a predição for apenas a média global ("was_impossible" no surprise).
+            pass
+
         cur = conn.cursor(cursor_factory=DictCursor)
 
-        if svd_model is None:
-            print("Modelo SVD não disponível. Retornando animes populares como fallback.")
-            cur.execute("SELECT mal_id, title, score, image_url FROM animes WHERE score IS NOT NULL ORDER BY score DESC LIMIT %s;", (limit,))
-            recommendations = cur.fetchall()
-            return [dict(rec) for rec in recommendations]
-
+        # Pega o que ele já assistiu (Tempo Real) para não recomendar de novo
         cur.execute("SELECT anime_id FROM ratings WHERE user_id = %s;", (user_id,))
         rated_anime_ids = {row['anime_id'] for row in cur.fetchall()}
 
-        cur.execute("SELECT mal_id, title, image_url FROM animes;")
-        all_animes = cur.fetchall()
+        # Pega lista de candidatos (Idealmente, não pegue TODOS os animes se tiver milhões)
+        # Otimização: Pegar apenas Top 500 ou 1000 animes populares para prever,
+        # ao invés da base inteira, para ser rápido.
+        cur.execute("SELECT mal_id, title, image_url FROM animes WHERE score > 6.0 ORDER BY score DESC LIMIT 1000;") 
+        candidate_animes = cur.fetchall()
 
         recommendations = []
-        for anime in all_animes:
-            if anime['mal_id'] not in rated_anime_ids:
-                predicted_rating = svd_model.predict(str(user_id), str(anime['mal_id'])).est
+        
+        for anime in candidate_animes:
+            anime_id = anime['mal_id']
+            if anime_id not in rated_anime_ids:
+                # Faz a predição
+                # O SVD do Surprise espera strings se foi treinado com strings, ou int com int.
+                # Geralmente converte-se para string para garantir.
+                prediction = svd_model.predict(str(user_id), str(anime_id))
+                
+                # Se o modelo disse que a predição foi impossível (usuário desconhecido),
+                # ele retorna a média global. Podemos filtrar isso se quisermos ser estritos.
+                if prediction.details.get('was_impossible'):
+                     continue
+
                 recommendations.append({
-                    "mal_id": anime['mal_id'],
+                    "mal_id": anime_id,
                     "title": anime['title'],
                     "image_url": anime['image_url'],
-                    "predicted_rating": predicted_rating
+                    "predicted_rating": prediction.est
                 })
 
-        recommendations.sort(key=lambda x: x['predicted_rating'], reverse=True)
+        # Se após a filtragem do SVD não sobrar nada (ex: usuário 100% novo e caiu no was_impossible), usa fallback
+        if not recommendations:
+             return get_fallback_recommendations(conn, user_id, limit)
 
+        recommendations.sort(key=lambda x: x['predicted_rating'], reverse=True)
         return recommendations[:limit]
 
     except (Exception, psycopg2.DatabaseError) as error:
         print(f"Erro na geração de recomendações: {error}")
-        raise HTTPException(status_code=500, detail="Ocorreu um erro ao gerar as recomendações.")
+        # Em caso de erro grave, tenta pelo menos o fallback simples
+        try:
+            return get_fallback_recommendations(conn, user_id, limit)
+        except:
+            raise HTTPException(status_code=500, detail="Ocorreu um erro ao gerar as recomendações.")
     finally:
         if conn:
-            cur.close()
             conn.close()
 
 class Rating(BaseModel):

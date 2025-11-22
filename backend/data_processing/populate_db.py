@@ -266,7 +266,8 @@ def process_anime(cursor, anime_id):
         insert_junction(cursor, 'animes_studios', anime_id=anime_id, related_id=studio.get('mal_id'))
 
     # --- Streaming ---
-    for streaming in anime_data.get('streaming', []):
+    # for streaming in anime_data.get('streaming', []):
+    for streaming in (anime_data.get('streaming') or []):
         streaming_mal_id = streaming.get('mal_id')
         streaming_name = streaming.get('name')
         streaming_url = streaming.get('url')

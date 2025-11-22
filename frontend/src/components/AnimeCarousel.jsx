@@ -1,25 +1,40 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, useLayoutEffect } from 'react';
 import AnimeCard from './AnimeCard';
 import '../styles/animeCarousel.css';
 
 /**
- * AnimeCarousel — comportamento tipo "Netflix": setas laterais que avançam/voltam uma "página"
- * - Permite swipe/touch naturalmente (overflow-x: auto)
- * - Calcula quantos itens cabem por página e faz scroll por múltiplos de itemWidth
- * - Mostra/oculta as setas conforme necessário e desabilita quando no início/fim
+ * AnimeCarousel
+ * Agora com persistência de posição usando localStorage
  */
-const AnimeCarousel = ({ animes }) => { // Removi a prop 'storageKey'
+const AnimeCarousel = ({ animes, storageKey }) => { 
   const viewportRef = useRef(null);
   const trackRef = useRef(null);
+  
+  // Usamos um ref para o timeout do save para não causar re-renders desnecessários
+  const saveTimeoutRef = useRef(null);
 
   const [isOverflowing, setIsOverflowing] = useState(false);
   const [canScrollPrev, setCanScrollPrev] = useState(false);
   const [canScrollNext, setCanScrollNext] = useState(false);
   const [pageScrollWidth, setPageScrollWidth] = useState(0);
 
-  // gap em px — mantenha this value igual ao gap usado no CSS (.anime-carousel-track)
-  const GAP_PX = 0;
+  const GAP_PX = 0; // Mantenha igual ao CSS
 
+  // 1. Restaurar a posição (useLayoutEffect evita "piscada" visual)
+  useLayoutEffect(() => {
+    const vp = viewportRef.current;
+    if (vp && storageKey && animes && animes.length > 0) {
+      const savedPosition = localStorage.getItem(`carousel_pos_${storageKey}`);
+      if (savedPosition) {
+        // Pequeno timeout para garantir que o DOM renderizou a largura correta
+        setTimeout(() => {
+            vp.scrollLeft = parseInt(savedPosition, 10);
+        }, 0);
+      }
+    }
+  }, [animes, storageKey]);
+
+  // 2. Configurar lógica de scroll e listeners
   useEffect(() => {
     const vp = viewportRef.current;
     const track = trackRef.current;
@@ -37,11 +52,24 @@ const AnimeCarousel = ({ animes }) => { // Removi a prop 'storageKey'
       setPageScrollWidth(itemsPerPage * fullItem);
     };
 
+    // Roda update inicial
     update();
 
     const onResize = () => update();
+
     const onScroll = () => {
       update();
+
+      // 3. Salvar posição no localStorage (com Debounce para performance)
+      if (storageKey) {
+        if (saveTimeoutRef.current) {
+          clearTimeout(saveTimeoutRef.current);
+        }
+        // Só salva se o usuário parar de scrollar por 100ms
+        saveTimeoutRef.current = setTimeout(() => {
+          localStorage.setItem(`carousel_pos_${storageKey}`, vp.scrollLeft);
+        }, 100);
+      }
     };
 
     window.addEventListener('resize', onResize);
@@ -50,8 +78,9 @@ const AnimeCarousel = ({ animes }) => { // Removi a prop 'storageKey'
     return () => {
       window.removeEventListener('resize', onResize);
       vp.removeEventListener('scroll', onScroll);
+      if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
     };
-  }, [animes]); // Removi 'storageKey' da dependência
+  }, [animes, storageKey]);
 
   const scrollByPage = (dir = 1) => {
     const vp = viewportRef.current;
@@ -76,7 +105,6 @@ const AnimeCarousel = ({ animes }) => { // Removi a prop 'storageKey'
 
   return (
     <div className="anime-carousel-wrapper">
-      {/* Left arrow */}
       {isOverflowing && (
         <button
           className="carousel-arrow carousel-arrow-left"
@@ -90,7 +118,6 @@ const AnimeCarousel = ({ animes }) => { // Removi a prop 'storageKey'
         </button>
       )}
 
-      {/* Viewport (pode dar scroll com touch) */}
       <div
         className="anime-carousel-viewport"
         ref={viewportRef}
@@ -111,7 +138,6 @@ const AnimeCarousel = ({ animes }) => { // Removi a prop 'storageKey'
         </div>
       </div>
 
-      {/* Right arrow */}
       {isOverflowing && (
         <button
           className="carousel-arrow carousel-arrow-right"
