@@ -63,10 +63,12 @@ def train_model(rating_df):
     
     # Usando os melhores parâmetros definidos anteriormente
     algo = SVD(
-        n_factors=150,
-        n_epochs=30,
+        n_factors=160,
+        n_epochs=25,
         lr_all=0.01,
-        reg_all=0.2,
+        reg_all=0.1,
+        lr_bi=0.008,
+        reg_bi=0.02,
         random_state=2025
     )
 
