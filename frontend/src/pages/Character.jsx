@@ -3,6 +3,198 @@ import { useParams } from 'react-router-dom';
 import Header from '../components/Header';
 import '../styles/character.css';
 
+// Função para formatar a data de nascimento (Mantida)
+const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    try {
+        const [datePart] = dateString.split('T');
+        const [year, month, day] = datePart.split('-');
+        return `${day}/${month}/${year}`;
+    } catch (e) {
+        return 'N/A';
+    }
+};
+
+const Character = () => {
+    const { id } = useParams();
+    const API_BASE_URL = "http://localhost:8000";
+    
+    const [character, setCharacter] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [animes, setAnimes] = useState([]);
+    
+    // 1. Novos estados para controlar a visibilidade das seções
+    const [showPictures, setShowPictures] = useState(false);
+    const [showVoiceActors, setShowVoiceActors] = useState(false);
+    const [showAnimeAppearances, setShowAnimeAppearances] = useState(false);
+    
+    // Funções para alternar a visibilidade
+    const togglePictures = () => setShowPictures(!showPictures);
+    const toggleVoiceActors = () => setShowVoiceActors(!showVoiceActors);
+    const toggleAnimeAppearances = () => setShowAnimeAppearances(!showAnimeAppearances);
+
+    // Lógica de busca de dados (Mantida)
+    useEffect(() => {
+        const getCharacterFullByID = async () => {
+            try {
+                const response = await fetch(`${API_BASE_URL}/character/${id}`);
+                const responseData = await response.json();
+
+                if (response.ok) {
+                    setCharacter(responseData);
+                } else {
+                    console.error("Erro ao buscar character:", responseData.detail);
+                }
+                
+                setLoading(false);
+            } catch (error) {
+                console.error("Erro de rede ao buscar character: ", error);
+                setLoading(false);
+            }
+        };
+
+        getCharacterFullByID();
+    }, [id]);
+
+    useEffect(() => {
+        const fetchCharacterAnimes = async () => {
+            if (!character) return;
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/character/${character.mal_id}/animes`);
+                const data = await response.json();
+                setAnimes(data);
+            } catch (err) {
+                console.error("Erro ao buscar animes do personagem:", err);
+            }
+        };
+
+        fetchCharacterAnimes();
+    }, [character]);
+
+
+    if (loading) return <p>Loading...</p>;
+
+    if (!character) return <p>Character not found.</p>;
+
+    // Adiciona um estilo simples para o indicador (pode ser melhorado com CSS)
+    const getToggleIndicator = (isVisible) => (
+        <span style={{ marginLeft: '10px', float: 'right' }}>
+            {isVisible ? '▲' : '▼'}
+        </span>
+    );
+
+    return (
+        <>
+            <Header />
+            <div className="character-container">
+                <h1 className="character-title">{character.name}</h1>
+                
+                <div className="character-details">
+                    <img src={character.image_url} alt={character.name} className="character-img" />
+
+                    <div className="character-info">
+                        <h2>Character Details</h2>
+                        {character.name_kanji && (
+                            <p><strong>Kanji Name:</strong> {character.name_kanji || 'N/A'}</p>
+                        )}
+                        {character.nicknames && (
+                            <p><strong>Nicknames:</strong> {character.nicknames || 'N/A'}</p>
+                        )}
+                        {character.favorites && (
+                            <p><strong>Favorites:</strong> {character.favorites || 'N/A'}</p>
+                        )}
+                    </div>
+                </div>
+
+                <h2 className="section-title">About the Character</h2>
+                <div className="about-content" dangerouslySetInnerHTML={{ __html: character.about?.replace(/\\n/g, '<br/>') || "Doesn't have info about the character" }}></div>
+
+                {/* 2. Seção Pictures Retrátil */}
+                {character.pictures && character.pictures.length > 0 && (
+                    <div className="collapsible-section">
+                        <h2 className="section-title collapsible-header" onClick={togglePictures} style={{ cursor: 'pointer' }}>
+                            Pictures {getToggleIndicator(showPictures)}
+                        </h2>
+                        {showPictures && (
+                            <div className="character-pictures-grid collapsible-content">
+                                {character.pictures.map((pic, index) => (
+                                    <a key={index} href={pic} target="_blank" rel="noopener noreferrer">
+                                        <img 
+                                            src={pic} 
+                                            alt={`${character.name} picture ${index}`} 
+                                            className="character-pic" 
+                                        />
+                                    </a>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                )}
+                
+                {/* 3. Seção Voice Actors Retrátil */}
+                <div className="collapsible-section">
+                    <h2 className="section-title collapsible-header" onClick={toggleVoiceActors} style={{ cursor: 'pointer' }}>
+                        Voice Actors {getToggleIndicator(showVoiceActors)}
+                    </h2>
+                    {showVoiceActors && (
+                        <div className="voice-actors-grid collapsible-content">
+                            {character.voice_actors?.map((actor, index) => (
+                                <div key={index} className="voice-card">
+                                    <a href={`/voice-actor/${actor.mal_id}`}>
+                                        <img 
+                                            src={actor.image_url} 
+                                            alt={actor.name} 
+                                            className="voice-img" 
+                                        />
+                                        <div className="voice-card-footer">
+                                            <p className="voice-name">{actor.name}</p>
+                                            <p className="voice-language">{actor.language}</p>
+                                        </div>
+                                    </a>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                {/* 4. Seção Anime Appearances Retrátil */}
+                {animes && animes.length > 0 && (
+                    <div className="collapsible-section">
+                        <h2 className="section-title collapsible-header" onClick={toggleAnimeAppearances} style={{ cursor: 'pointer' }}>
+                            Anime Appearances {getToggleIndicator(showAnimeAppearances)}
+                        </h2>
+                        {showAnimeAppearances && (
+                            <div className="anime-grid collapsible-content">
+                                {animes.map((anime) => (
+                                    <div key={anime.mal_id} className="anime-card">
+                                        <a href={`/anime/${anime.mal_id}`}>
+                                            <img src={anime.image_url} alt={anime.title} className="anime-img-grid" />
+                                            <div className="anime-card-footer">
+                                                <p className="anime-title-grid">{anime.title}</p>
+                                            </div>
+                                        </a>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                )}
+
+            </div>
+        </>
+    );
+};
+
+export default Character;
+
+/*
+
+import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
+import Header from '../components/Header';
+import '../styles/character.css';
+
 // Função para formatar a data de nascimento
 const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
@@ -151,3 +343,5 @@ const Character = () => {
 };
 
 export default Character;
+
+*/

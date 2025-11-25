@@ -132,7 +132,7 @@
   }
 
   .add-to-list-button {
-    width: 100%; /* botão ocupa toda a largura */
+    width: 120%; /* botão ocupa toda a largura */
     font-size: 16px;
     padding: 12px 0;
   }
